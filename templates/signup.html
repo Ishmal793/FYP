@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Sign up - ElevateCareer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card auth-card mt-2">
+            <div class="card-body p-4 p-sm-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold mb-1">Create an account</h2>
+                    <p class="text-muted-custom">Start accelerating your career today</p>
+                </div>
+                <div id="alert-container"></div>
+                <form id="signup-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Email address</label>
+                        <input type="email" class="form-control" id="email" required placeholder="name@example.com">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium small">Password</label>
+                            <input type="password" class="form-control" id="password" required placeholder="••••••••">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium small">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" required
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-medium small">Account Type</label>
+                        <select class="form-select" id="role" required>
+                            <option value="job_seeker" selected>Job Seeker</option>
+                            <option value="hr">HR / Recruiter</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="submit-btn" style="padding: 12px;">Sign
+                        up</button>
+                </form>
+                <div class="text-center mt-4 text-muted-custom small">
+                    Already have an account? <a href="/login/" class="text-decoration-none fw-medium text-primary">Log
+                        in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirm_password = document.getElementById('confirm_password').value;
+        const role = document.getElementById('role').value;
+
+        const btn = document.getElementById('submit-btn');
+        const alertContainer = document.getElementById('alert-container');
+
+        if (password !== confirm_password) {
+            alertContainer.innerHTML = `<div class="alert alert-warning py-2 small rounded-3">Passwords do not match.</div>`;
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating account...';
+        alertContainer.innerHTML = '';
+
+        try {
+            const response = await fetch('/api/auth/register/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, role })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alertContainer.innerHTML = `<div class="alert alert-success py-2 small rounded-3">Account created successfully! Redirecting to login...</div>`;
+                setTimeout(() => { window.location.href = '/login/'; }, 1500);
+            } else {
+                let errorMsg = 'Error creating account.';
+                if (data.email) errorMsg = data.email[0];
+                else if (data.password) errorMsg = data.password[0];
+                alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">${errorMsg}</div>`;
+            }
+        } catch (err) {
+            alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">Connection error. Please try again.</div>`;
+        } finally {
+            if (btn.innerHTML !== 'Success') {
+                btn.disabled = false;
+                btn.innerHTML = 'Sign up';
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Log in - ElevateCareer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card auth-card mt-4">
+            <div class="card-body p-4 p-sm-5">
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold mb-1">Welcome back</h2>
+                    <p class="text-muted-custom">Log in to your account</p>
+                </div>
+                <div id="alert-container"></div>
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium small">Email address</label>
+                        <input type="email" class="form-control" id="email" required placeholder="name@example.com">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-medium small">Password</label>
+                        <input type="password" class="form-control" id="password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="submit-btn" style="padding: 12px;">Log
+                        in</button>
+                </form>
+                <div class="text-center mt-4 text-muted-custom small">
+                    Don't have an account? <a href="/signup/" class="text-decoration-none fw-medium text-primary">Sign
+                        up</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const btn = document.getElementById('submit-btn');
+        const alertContainer = document.getElementById('alert-container');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
+        alertContainer.innerHTML = '';
+
+        try {
+            const response = await fetch('/api/auth/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('access', data.access);
+                localStorage.setItem('refresh', data.refresh);
+                window.location.href = '/dashboard/';
+            } else {
+                let errorMsg = 'Invalid email or password.';
+                if (data.detail) errorMsg = data.detail;
+                alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">${errorMsg}</div>`;
+            }
+        } catch (err) {
+            alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">Connection error. Please try again.</div>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Log in';
+        }
+    });
+</script>
+{% endblock %}
