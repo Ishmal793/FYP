@@ -1,0 +1,353 @@
+# 4.1 System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Presentation Layer
+        A1[Job Seeker Dashboard]
+        A2[HR Recruiter Portal]
+    end
+
+    subgraph Logic & Routing Layer
+        B1[Django REST API]
+        B2[AI Orchestrator]
+    end
+
+    subgraph Hybrid AI Layer
+        C1[NLP Parser / SpaCy]
+        C2[Semantic Engine / Sentence-BERT]
+        C3[RAG Query Builder]
+        C4[Groq LLaMA 3 LLM]
+    end
+
+    subgraph Data Layer
+        D1[(PostgreSQL / Relational DB)]
+        D2[(FAISS / Chroma Vector DB)]
+    end
+
+    subgraph External Services
+        E1[SerpAPI - Live Jobs]
+    end
+
+    A1 <-->|JSON/HTTPS| B1
+    A2 <-->|JSON/HTTPS| B1
+    B1 <--> B2
+    
+    B2 -->|Raw Text| C1
+    B2 <-->|Embeddings| C2
+    B2 <-->|Career Query| C3
+    C3 <-->|Context Retrieval| C2
+    C3 <-->|Prompt Generation| C4
+    
+    C1 -->|Structured Data| D1
+    C2 <-->|Store/Search Vectors| D2
+    
+    C4 <-->|Job Search| E1
+```
+
+---
+
+# 4.3 Data Flow Diagram
+
+### Level 0 DFD
+```mermaid
+flowchart LR
+    E1[Job Seeker]
+    E2[HR Recruiter]
+    E3[Live Job APIs]
+    
+    S((AI Skill Gap & Matching System))
+    
+    E1 -->|Upload Resume, Career Queries| S
+    S -->|ATS Score, Gap Report, RAG Advice| E1
+    
+    E2 -->|Post Job Description| S
+    S -->|Ranked Masked Candidates| E2
+    
+    S <-->|Search Parameters / Job Results| E3
+```
+
+### Level 1 DFD (Detailed Flow)
+```mermaid
+flowchart TD
+    E1[Job Seeker]
+    E2[HR Recruiter]
+    
+    P1(NLP Parsing & Extraction)
+    P2(Semantic Vector Embedding)
+    P3(ATS Scoring Engine)
+    P4(RAG Career Coach)
+    P5(HR Semantic Search)
+    
+    D1[(Profile DB)]
+    D2[(Candidate Vector DB)]
+    D3[(Knowledge Base Vector DB)]
+    
+    E1 -->|Raw PDF| P1
+    P1 -->|Extracted JSON| D1
+    P1 -->|Skill Text| P2
+    P2 -->|Candidate Vectors| D2
+    
+    P1 -->|Structured Data| P3
+    P3 -->|Gap Analysis| E1
+    
+    E1 -->|Career Questions| P4
+    P4 <-->|Context Query| D3
+    P4 -->|Grounded Advice| E1
+    
+    E2 -->|Job Description| P5
+    P5 <-->|Cosine Similarity| D2
+    P5 -->|Masked Profiles| E2
+```
+
+---
+
+# 4.4.1 Class Diagram
+
+```mermaid
+classDiagram
+    class User {
+        +UUID id
+        +String email
+        +String password_hash
+        +String role
+        +login()
+        +logout()
+    }
+
+    class CandidateProfile {
+        +UUID id
+        +String linkedin_url
+        +Float current_ats_score
+        +upload_resume()
+        +get_skill_gaps()
+    }
+
+    class HRRecruiter {
+        +UUID id
+        +String company_name
+        +post_job_description()
+        +view_ranked_candidates()
+    }
+
+    class Resume {
+        +UUID id
+        +String raw_text
+        +JSON parsed_data
+        +String vector_id
+        +parse_with_nlp()
+    }
+
+    class VectorEngine {
+        +Model embedding_model
+        +Index faiss_index
+        +create_embedding(text)
+        +semantic_search(query_vector)
+    }
+
+    class RAGCoach {
+        +List chat_history
+        +retrieve_context(query)
+        +generate_advice(context)
+    }
+
+    class JobPosting {
+        +UUID id
+        +String title
+        +String description
+        +Boolean is_active
+    }
+
+    User <|-- CandidateProfile
+    User <|-- HRRecruiter
+    CandidateProfile "1" *-- "1" Resume : owns
+    HRRecruiter "1" *-- "*" JobPosting : creates
+    Resume "1" --> "1" VectorEngine : embeds via
+    JobPosting "1" --> "1" VectorEngine : queries via
+    CandidateProfile "1" --> "1" RAGCoach : interacts with
+```
+
+---
+
+# 4.5.1 Activity Diagram
+
+### Job Seeker Workflow
+```mermaid
+flowchart TD
+    Start((Start)) --> Login[User Login / Register]
+    Login --> Cond{Upload Resume?}
+    Cond -->|No| Dashboard[View Dashboard]
+    Cond -->|Yes| Parse[Extract Text using NLP]
+    
+    Parse --> Embed[Generate Vector Embeddings]
+    Embed --> SaveDB[(Save to Vector DB)]
+    
+    SaveDB --> Fork{Parallel Processing}
+    Fork --> ATS[Calculate ATS Score]
+    Fork --> Jobs[Fetch Live Jobs SerpAPI]
+    Fork --> Coach[Initialize RAG Coach Context]
+    
+    ATS --> Join{Merge Results}
+    Jobs --> Join
+    Coach --> Join
+    
+    Join --> Dashboard
+    Dashboard --> End((End))
+```
+
+### HR Recruiter Workflow
+```mermaid
+flowchart TD
+    Start((Start)) --> Login[HR Login]
+    Login --> Post[Post Job Description]
+    Post --> Embed[Generate JD Vector Embedding]
+    Embed --> Query[Query Candidate Vector DB]
+    Query --> Mask[Mask PII from Results]
+    Mask --> Display[Display Ranked Candidates]
+    Display --> End((End))
+```
+
+---
+
+# 4.5.2 State Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uploaded
+    Uploaded --> Extracted : PyMuPDF / SpaCy
+    Extracted --> Parsed : JSON Validation
+    Parsed --> Embedded : Sentence-BERT
+    Embedded --> Evaluated : ATS Matcher
+    Evaluated --> [*]
+```
+
+---
+
+# 4.5.3 Sequence Diagram
+
+### Sequence 1: RAG Career Coach
+```mermaid
+sequenceDiagram
+    actor Candidate
+    participant UI as Dashboard UI
+    participant API as Django Orchestrator
+    participant DB as Vector Engine (FAISS)
+    participant LLM as Groq API (LLaMA 3)
+    
+    Candidate->>UI: Ask Career Question
+    UI->>API: POST /api/chat
+    API->>DB: embed_and_search(question)
+    activate DB
+    DB-->>API: Return Top-3 Contexts (Courses/Tips)
+    deactivate DB
+    API->>LLM: send_prompt(Context + Question)
+    activate LLM
+    LLM-->>API: stream_generated_advice()
+    deactivate LLM
+    API-->>UI: Return Grounded Response
+    UI-->>Candidate: Display Advice
+```
+
+### Sequence 2: HR Matching
+```mermaid
+sequenceDiagram
+    actor HR
+    participant UI as HR Portal
+    participant API as Django Backend
+    participant Vector as FAISS DB
+    
+    HR->>UI: Post Job Description
+    UI->>API: Submit JD Details
+    API->>Vector: embed_and_search(JD_text)
+    activate Vector
+    Vector-->>API: Return Top-Matched Candidates
+    deactivate Vector
+    API->>API: Mask PII (Phone, Address)
+    API-->>UI: Return Ranked & Masked Profiles
+    UI-->>HR: Display Candidate List
+```
+
+---
+
+# 4.6.1 Component Diagram
+
+```mermaid
+flowchart LR
+    subgraph Frontend
+        UI[Django Templates / UI App]
+    end
+
+    subgraph Backend Services
+        Auth[Authentication Component]
+        Parser[NLP Parser Component]
+        Vector[Vector DB Component]
+        RAG[RAG & LLM Component]
+    end
+
+    UI -->|REST/HTTPS| Auth
+    UI -->|REST/HTTPS| Parser
+    UI -->|REST/HTTPS| RAG
+    
+    Parser -->|Text Data| Vector
+    RAG -->|Semantic Query| Vector
+```
+
+---
+
+# 4.7.1 Entity Relationship Diagram & 4.8 Database Model
+
+*(Note: In modern database design diagrams for Mermaid, the ER Diagram perfectly represents both the Entity Relationships and the Database Schema/Model simultaneously)*
+
+```mermaid
+erDiagram
+    USERS {
+        uuid id PK
+        string email UK
+        string password_hash
+        string role
+    }
+    
+    CANDIDATE_PROFILES {
+        uuid id PK
+        uuid user_id FK
+        string linkedin_url
+        float latest_ats_score
+    }
+    
+    HR_PROFILES {
+        uuid id PK
+        uuid user_id FK
+        string company_name
+    }
+    
+    RESUMES {
+        uuid id PK
+        uuid candidate_id FK
+        text raw_text
+        jsonb parsed_data
+        string vector_index_id
+        timestamp created_at
+    }
+    
+    JOB_POSTINGS {
+        uuid id PK
+        uuid hr_id FK
+        string title
+        text description
+        boolean is_active
+    }
+    
+    RAG_CHAT_LOGS {
+        uuid id PK
+        uuid candidate_id FK
+        text user_query
+        string retrieved_context_ids
+        text bot_response
+        timestamp created_at
+    }
+
+    USERS ||--o| CANDIDATE_PROFILES : has
+    USERS ||--o| HR_PROFILES : has
+    CANDIDATE_PROFILES ||--o| RESUMES : uploads
+    CANDIDATE_PROFILES ||--o{ RAG_CHAT_LOGS : initiates
+    HR_PROFILES ||--o{ JOB_POSTINGS : creates
+```

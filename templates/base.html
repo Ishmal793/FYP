@@ -9,136 +9,184 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}AI Career Platform{% endblock %}</title>
-    <!-- Bootstrap 5 CDN -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0,0,0,0.08);
+            --card-bg: #ffffff;
+            --nav-height: 80px;
+            --accent-color: #2563eb;
+        }
+
+        [data-bs-theme="dark"] {
+            --glass-bg: rgba(15, 23, 42, 0.85);
+            --glass-border: rgba(255,255,255,0.1);
+            --card-bg: #1e293b;
+            --accent-color: #60a5fa;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        [data-bs-theme="light"] body {
-            background-color: #f8fafc;
-            color: #0f172a;
-        }
-
-        [data-bs-theme="dark"] body {
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: #2563eb !important;
-            letter-spacing: -0.5px;
-        }
-
-        .auth-card {
-            border: none;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-            background: var(--bs-body-bg);
-            transition: all 0.3s ease;
-        }
-
-        [data-bs-theme="dark"] .auth-card {
-            background: var(--bs-body-bg);
-            border: 1px solid var(--bs-border-color);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        .form-control,
-        .form-select {
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--bs-border-color);
-            background-color: var(--bs-tertiary-bg);
-            color: var(--bs-body-color);
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-            border-color: #2563eb;
+            transition: all 0.4s ease;
+            padding-top: var(--nav-height);
             background-color: var(--bs-body-bg);
-            color: var(--bs-body-color);
         }
 
-        .btn-primary {
-            background-color: #2563eb;
-            border-color: #2563eb;
-            border-radius: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            font-weight: 500;
+        h1, h2, h3, h4, h5, h6, .navbar-brand {
+            font-family: 'Outfit', sans-serif;
         }
 
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-            border-color: #1d4ed8;
+        .navbar-premium {
+            height: var(--nav-height);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--glass-bg) !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+            z-index: 1030;
+        }
+        [data-bs-theme="dark"] .navbar-premium {
+            border-bottom: 1px solid rgba(255,255,255,0.05) !important;
         }
 
-        .text-muted-custom {
-            color: #64748b;
+        .navbar-brand-pro {
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.6rem;
+            letter-spacing: -1.2px;
+            text-decoration: none !important;
+        }
+
+        .nav-link-pro {
+            font-weight: 600;
+            padding: 0.6rem 1.2rem !important;
+            border-radius: 0.8rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            color: var(--bs-body-color) !important;
+            text-decoration: none !important;
+        }
+        .nav-link-pro:hover {
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--accent-color) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Custom Premium Toasts */
+        .toast-container-pro {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            z-index: 9999;
+        }
+        .toast-pro {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.5rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-width: 300px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .mesh-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+            filter: blur(120px);
+            pointer-events: none;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom py-3">
+    <div class="mesh-bg">
+        <div style="position: absolute; top: -10%; right: -5%; width: 600px; height: 600px; background: rgba(37, 99, 235, 0.1); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -5%; left: -5%; width: 500px; height: 500px; background: rgba(124, 58, 237, 0.08); border-radius: 50%;"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container-pro" id="toast-container"></div>
+
+    <nav class="navbar navbar-expand-lg navbar-premium fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <i class="bi bi-rocket-takeoff-fill me-2"></i> ElevateCareer
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <a class="navbar-brand-pro" href="/">ElevateCareer</a>
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <ul class="navbar-nav ms-auto align-items-center" id="nav-items-container">
-                <!-- Nav items injected via JS -->
-            </ul>
-            <button class="btn btn-link text-decoration-none ms-lg-3 d-flex align-items-center" id="theme-toggle"
-                onclick="toggleTheme()" aria-label="Toggle Theme">
-                <i class="bi bi-moon-stars-fill fs-5" id="theme-icon" style="color: inherit;"></i>
-            </button>
-        </div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1" id="nav-items-container"></ul>
+                <div class="ms-lg-3 d-flex align-items-center border-start ps-3 border-opacity-10">
+                    <button class="btn btn-sm btn-light rounded-pill px-2" id="theme-toggle" onclick="toggleTheme()" style="background: rgba(0,0,0,0.03); border: none;">
+                        <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
-    <main class="container py-5">
+    <main class="container py-4">
         {% block content %}{% endblock %}
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast-pro`;
+            const icon = type === 'success' ? 'bi-check-circle-fill text-success' : type === 'error' ? 'bi-x-circle-fill text-danger' : 'bi-info-circle-fill text-primary';
+            toast.innerHTML = `<i class="bi ${icon} fs-4"></i> <div class="fw-bold">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        window.alert = (msg) => showToast(msg, 'info'); // Override alert for better UI
+
         function updateNavbar() {
             const token = localStorage.getItem('access');
             const navContainer = document.getElementById('nav-items-container');
             if (token) {
                 navContainer.innerHTML = `
-                    <li class="nav-item"><a class="nav-link fw-medium" href="/dashboard/">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link fw-medium" href="/profile/">My Profile</a></li>
-                    <li class="nav-item ms-lg-3"><button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill px-3">Logout</button></li>
+                    <li class="nav-item"><a class="nav-link-pro" href="/home/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link-pro" href="/dashboard/">Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link-pro" href="/profile/">Profile</a></li>
+                    <li class="nav-item ms-lg-2"><button onclick="logout()" class="btn btn-outline-danger btn-sm rounded-pill px-4">Logout</button></li>
                 `;
             } else {
                 navContainer.innerHTML = `
-                    <li class="nav-item"><a class="nav-link fw-medium" href="/login/">Log in</a></li>
-                    <li class="nav-item ms-lg-3"><a class="btn btn-primary btn-sm rounded-pill px-4" href="/signup/">Sign up</a></li>
+                    <li class="nav-item"><a class="nav-link-pro" href="/login/">Login</a></li>
+                    <li class="nav-item ms-lg-2"><a class="btn btn-primary btn-sm rounded-pill px-4 fw-bold" href="/join/">Get Started</a></li>
                 `;
             }
         }
-        function logout() {
-            localStorage.removeItem('access');
-            localStorage.removeItem('refresh');
-            window.location.href = '/login/';
-        }
+        function logout() { localStorage.clear(); window.location.href = '/login/'; }
 
         function toggleTheme() {
             const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            const newTheme = html.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
             html.setAttribute('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
@@ -146,13 +194,7 @@
 
         function updateThemeIcon(theme) {
             const icon = document.getElementById('theme-icon');
-            if (icon) {
-                if (theme === 'dark') {
-                    icon.className = 'bi bi-sun-fill fs-5 text-warning';
-                } else {
-                    icon.className = 'bi bi-moon-stars-fill fs-5 text-dark';
-                }
-            }
+            if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -162,5 +204,4 @@
     </script>
     {% block extra_js %}{% endblock %}
 </body>
-
 </html>

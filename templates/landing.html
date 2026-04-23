@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}ElevateCareer - AI-Powered Job Matching{% endblock %}
+
+{% block extra_css %}
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .hero-section {
+        min-height: 95vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        padding-top: 80px;
+    }
+
+    .hero-image-wrapper {
+        perspective: 1500px;
+        position: relative;
+    }
+
+    .hero-3d-card {
+        transform: rotateY(-15deg) rotateX(10deg);
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        border-radius: 2rem;
+        box-shadow: 0 50px 100px -20px rgba(0,0,0,0.25), 0 30px 60px -30px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .hero-image-wrapper:hover .hero-3d-card {
+        transform: rotateY(0deg) rotateX(0deg) scale(1.02);
+    }
+
+    .floating-element {
+        position: absolute;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .icon-box {
+        width: 70px;
+        height: 70px;
+        border-radius: 1.25rem;
+        background: var(--primary-gradient);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+        transition: all 0.3s ease;
+    }
+
+    .feature-3d:hover {
+        border: 2px solid #2563eb !important;
+        box-shadow: 0 0 30px rgba(37, 99, 235, 0.2) !important;
+    }
+
+    .feature-3d:hover .icon-box {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Improved AI Workflow */
+    .workflow-card {
+        position: relative;
+        z-index: 2;
+    }
+
+    .workflow-node {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: white;
+        border: 4px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem auto;
+        font-size: 1.5rem;
+        color: #2563eb;
+        box-shadow: var(--card-shadow);
+        transition: all 0.4s ease;
+    }
+
+    .workflow-card:hover .workflow-node {
+        background: var(--primary-gradient);
+        color: white;
+        border-color: rgba(255,255,255,0.2);
+        transform: scale(1.2) rotate(10deg);
+        box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
+    }
+
+    .workflow-connector {
+        position: absolute;
+        top: 40px;
+        left: 60%;
+        width: 80%;
+        height: 2px;
+        background: dashed #cbd5e1;
+        z-index: 1;
+    }
+
+    @media (max-width: 991px) {
+        .workflow-connector { display: none; }
+    }
+
+    .tech-icon-card {
+        width: 120px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .tech-icon-card:hover {
+        transform: translateY(-10px) scale(1.1);
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .tech-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .shimmer-text {
+        background: linear-gradient(90deg, var(--bs-emphasis-color), #2563eb, var(--bs-emphasis-color));
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shimmer 3s linear infinite;
+    }
+
+    @keyframes shimmer {
+        to { background-position: 200% center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Background -->
+<div class="mesh-gradient">
+    <div class="mesh-ball-1"></div>
+    <div class="mesh-ball-2"></div>
+</div>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-up" data-aos-duration="1200">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-4 fw-bold shadow-sm border border-primary border-opacity-10">
+                    <i class="bi bi-stars me-2"></i> Next-Gen AI Career Assistant
+                </span>
+                <h1 class="display-3 fw-bolder mb-4 lh-tight" style="letter-spacing: -2px;">
+                    Revolutionize Your <br>
+                    <span class="text-primary shimmer-text">Professional Journey</span>
+                </h1>
+                <p class="lead text-muted mb-5 pe-lg-5 fs-5">
+                    Harness the power of Hybrid AI to decode your career potential. Our system doesn't just match jobs—it architects your future.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="/join/" class="btn btn-primary btn-lg px-5 py-3 shadow-lg d-flex align-items-center">
+                        Get Started Now <i class="bi bi-arrow-right-short ms-2 fs-4"></i>
+                    </a>
+                    <a href="#features" class="btn btn-outline-secondary btn-lg px-4 py-3 rounded-4">
+                        Explore Features
+                    </a>
+                </div>
+                
+                <div class="mt-5 d-flex align-items-center gap-4 text-muted small">
+                    <div><i class="bi bi-check-circle-fill text-success me-2"></i> ATS Scoring</div>
+                    <div><i class="bi bi-check-circle-fill text-success me-2"></i> Skill Mapping</div>
+                    <div><i class="bi bi-check-circle-fill text-success me-2"></i> Job Prediction</div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 d-none d-lg-block" data-aos="zoom-in-left" data-aos-duration="1200">
+                <div class="hero-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+                         alt="AI Visualization" class="img-fluid hero-3d-card floating">
+                    
+                    <!-- Floating UI Cards -->
+                    <div class="glass-card p-3 floating-element shadow-lg" style="top: 20%; left: -10%; width: 220px; animation-delay: -1s;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-success bg-opacity-10 text-success rounded p-2"><i class="bi bi-graph-up-arrow"></i></div>
+                            <div>
+                                <div class="fw-bold small">Match Rate</div>
+                                <div class="text-success h5 mb-0">98.4%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card p-3 floating-element shadow-lg" style="bottom: 10%; right: -5%; width: 200px; animation-delay: -3s;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded p-2"><i class="bi bi-lightning-charge"></i></div>
+                            <div>
+                                <div class="fw-bold small">AI Parsing</div>
+                                <div class="text-muted small">Optimized</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5 my-5">
+    <div class="container py-5">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h6 class="text-primary fw-bold text-uppercase mb-2">Core Capabilities</h6>
+            <h2 class="display-5 fw-bold mb-3">Smarter Analytics, Faster Hiring</h2>
+            <p class="text-muted max-w-2xl mx-auto fs-5">Everything you need to stay ahead in the modern job market.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-card p-5 h-100 feature-3d border-0 shadow-sm">
+                    <div class="icon-box"><i class="bi bi-shield-check"></i></div>
+                    <h4 class="fw-bold mb-3">ATS Precision</h4>
+                    <p class="text-muted mb-0">Deep evaluation of your resume against industry-standard ATS algorithms.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-card p-5 h-100 feature-3d border-0 shadow-sm">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"><i class="bi bi-cpu"></i></div>
+                    <h4 class="fw-bold mb-3">Skill Mapping</h4>
+                    <p class="text-muted mb-0">AI-driven gap analysis to identify exactly what skills you need next.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-card p-5 h-100 feature-3d border-0 shadow-sm">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);"><i class="bi bi-search"></i></div>
+                    <h4 class="fw-bold mb-3">Smart Match</h4>
+                    <p class="text-muted mb-0">Instantly find jobs that align with your unique experience and goals.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="glass-card p-5 h-100 feature-3d border-0 shadow-sm">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);"><i class="bi bi-mortarboard"></i></div>
+                    <h4 class="fw-bold mb-3">Pathways</h4>
+                    <p class="text-muted mb-0">Personalized learning paths to bridge gaps and level up your career.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HR & Recruiter Section -->
+<section class="py-5 bg-primary bg-opacity-10 position-relative overflow-hidden">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 order-lg-2 mb-5 mb-lg-0" data-aos="fade-left">
+                <div class="glass-card p-5 border-0 shadow-lg" style="background: var(--glass-bg);">
+                    <h6 class="text-primary fw-bold text-uppercase mb-3">For Employers</h6>
+                    <h2 class="display-6 fw-bold mb-4">Find Talent with <br><span class="text-primary">Semantic Precision</span></h2>
+                    <ul class="list-unstyled mb-5">
+                        <li class="mb-3 d-flex align-items-center"><i class="bi bi-check2-circle text-primary me-3 fs-4"></i> AI-Powered Candidate Ranking</li>
+                        <li class="mb-3 d-flex align-items-center"><i class="bi bi-check2-circle text-primary me-3 fs-4"></i> Automated ATS Screening</li>
+                        <li class="mb-3 d-flex align-items-center"><i class="bi bi-check2-circle text-primary me-3 fs-4"></i> Hybrid Semantic Search for Skills</li>
+                    </ul>
+                    <a href="/join/?role=hr" class="btn btn-primary btn-lg px-5 py-3 rounded-4 fw-bold">Open Recruiter Portal</a>
+                </div>
+            </div>
+            <div class="col-lg-6 order-lg-1" data-aos="fade-right">
+                <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Recruiter Panel" class="img-fluid rounded-5 shadow-2xl">
+            </div>
+        </div>
+    </div>
+</section>
+<section class="py-5 bg-body-tertiary position-relative overflow-hidden">
+    <div class="container py-5">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h6 class="text-primary fw-bold text-uppercase mb-2">Process</h6>
+            <h2 class="display-6 fw-bold mb-3">The AI Workflow</h2>
+            <p class="text-muted">Simple, powerful, and completely automated.</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Step 1 -->
+            <div class="col-md-4 col-lg px-2 workflow-card" data-aos="zoom-in" data-aos-delay="100">
+                <div class="workflow-node">
+                    <i class="bi bi-cloud-upload"></i>
+                </div>
+                <div class="workflow-connector"></div>
+                <div class="text-center">
+                    <h6 class="fw-bold mt-3 mb-2">Resume Analysis</h6>
+                    <p class="small text-muted">Upload and parse instantly</p>
+                </div>
+            </div>
+            <!-- Step 2 -->
+            <div class="col-md-4 col-lg px-2 workflow-card" data-aos="zoom-in" data-aos-delay="200">
+                <div class="workflow-node">
+                    <i class="bi bi-cpu-fill"></i>
+                </div>
+                <div class="workflow-connector"></div>
+                <div class="text-center">
+                    <h6 class="fw-bold mt-3 mb-2">Skill Detection</h6>
+                    <p class="small text-muted">Identify core competencies</p>
+                </div>
+            </div>
+            <!-- Step 3 -->
+            <div class="col-md-4 col-lg px-2 workflow-card" data-aos="zoom-in" data-aos-delay="300">
+                <div class="workflow-node">
+                    <i class="bi bi-bar-chart-line"></i>
+                </div>
+                <div class="workflow-connector"></div>
+                <div class="text-center">
+                    <h6 class="fw-bold mt-3 mb-2">Market Data</h6>
+                    <p class="small text-muted">Compare with live trends</p>
+                </div>
+            </div>
+            <!-- Step 4 -->
+            <div class="col-md-4 col-lg px-2 workflow-card" data-aos="zoom-in" data-aos-delay="400">
+                <div class="workflow-node">
+                    <i class="bi bi-patch-check"></i>
+                </div>
+                <div class="workflow-connector"></div>
+                <div class="text-center">
+                    <h6 class="fw-bold mt-3 mb-2">Gap Filling</h6>
+                    <p class="small text-muted">Bridge missing skills</p>
+                </div>
+            </div>
+            <!-- Step 5 -->
+            <div class="col-md-4 col-lg px-2 workflow-card" data-aos="zoom-in" data-aos-delay="500">
+                <div class="workflow-node">
+                    <i class="bi bi-rocket-takeoff"></i>
+                </div>
+                <div class="text-center">
+                    <h6 class="fw-bold mt-3 mb-2">Perfect Match</h6>
+                    <p class="small text-muted">Apply with confidence</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tech Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h3 class="fw-bold">Modern Tech Architecture</h3>
+        </div>
+        <div class="d-flex justify-content-center flex-wrap gap-4" data-aos="fade-up">
+            <div class="tech-icon-card"><i class="bi bi-gpu-card tech-icon"></i><span class="small fw-bold">LLM-3</span></div>
+            <div class="tech-icon-card"><i class="bi bi-database-check tech-icon"></i><span class="small fw-bold">Vector DB</span></div>
+            <div class="tech-icon-card"><i class="bi bi-code-square tech-icon"></i><span class="small fw-bold">NLP Engine</span></div>
+            <div class="tech-icon-card"><i class="bi bi-file-earmark-pdf tech-icon"></i><span class="small fw-bold">ATS Parser</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- AOS Script & 3D Effects -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        AOS.init({
+            once: true,
+            offset: 50,
+            duration: 1000
+        });
+
+        // 3D Tilt Effect for feature cards
+        const cards = document.querySelectorAll('.feature-3d');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`;
+            });
+        });
+
+        // Auth Redirect Check
+        const token = localStorage.getItem('access');
+        if (token) {
+            const heroBtn = document.querySelector('a[href="/join/"]');
+            if (heroBtn) {
+                heroBtn.href = '/home/';
+                heroBtn.innerHTML = 'Go to Career Hub <i class="bi bi-arrow-right-circle ms-2"></i>';
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block footer %}
+<footer class="bg-dark text-white py-5 mt-5">
+    <div class="container py-4">
+        <div class="row g-5">
+            <div class="col-lg-4">
+                <h4 class="fw-bold mb-4" style="font-family: 'Outfit';">
+                    <span class="text-primary"><i class="bi bi-rocket-takeoff-fill"></i> Elevate</span>Career
+                </h4>
+                <p class="text-white-50">Empowering professionals with AI-driven insights to navigate the evolving job market. Your career architect in the digital age.</p>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="#" class="text-white-50 fs-5 hover-primary"><i class="bi bi-github"></i></a>
+                    <a href="#" class="text-white-50 fs-5 hover-primary"><i class="bi bi-linkedin"></i></a>
+                    <a href="#" class="text-white-50 fs-5 hover-primary"><i class="bi bi-twitter-x"></i></a>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2 ms-lg-auto">
+                <h6 class="fw-bold mb-4 text-uppercase small" style="letter-spacing: 1px;">Platform</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-white">ATS Scorer</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-white">Job Matcher</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-white">Skill Gap</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-lg-2">
+                <h6 class="fw-bold mb-4 text-uppercase small" style="letter-spacing: 1px;">Legal</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-white">Privacy Policy</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-white">Terms of Use</a></li>
+                    <li class="mb-2"><a href="#" class="text-decoration-none text-white-50 hover-white">Cookie Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3">
+                <h6 class="fw-bold mb-4 text-uppercase small" style="letter-spacing: 1px;">Stay Updated</h6>
+                <p class="text-white-50 small">Get latest career tips and AI insights.</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control bg-transparent border-secondary text-white small" placeholder="Email address">
+                    <button class="btn btn-primary btn-sm px-3" type="button"><i class="bi bi-send"></i></button>
+                </div>
+            </div>
+        </div>
+        <hr class="my-5 border-secondary opacity-25">
+        <div class="text-center text-white-50 small">
+            &copy; 2026 ElevateCareer AI System. Built with <i class="bi bi-heart-fill text-danger mx-1"></i> for the future of work.
+        </div>
+    </div>
+</footer>
+
+<style>
+    .hover-primary:hover { color: #2563eb !important; }
+    .hover-white:hover { color: white !important; }
+</style>
+{% endblock %}

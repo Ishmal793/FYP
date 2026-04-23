@@ -18,14 +18,30 @@ class JobPredictionView(APIView):
         try:
             # Verify the user owns this resume
             resume_obj = Resume.objects.get(id=resume_id, user=request.user)
-            parsed_data = resume_obj.parsed_data
+            parsed_data = resume_obj.parsed_data or {}
+            target_field = request.data.get('target_field', '')
             
             if not parsed_data:
                 return Response({"error": "This resume has no parsed data."}, status=status.HTTP_400_BAD_REQUEST)
                 
-            predicted_jobs = predict_job_titles(parsed_data)
+            from .job_predictor_agent import run_job_prediction
             
-            return Response({"jobs": predicted_jobs}, status=status.HTTP_200_OK)
+            # Extract specific contexts for the agent
+            skills_list = parsed_data.get('skills', [])
+            experience_summary = parsed_data.get('experience', '')
+            education_summary = parsed_data.get('education', '')
+            projects_list = parsed_data.get('projects', [])
+            
+            # Run the new high-accuracy predictor
+            prediction_result = run_job_prediction(
+                preferred_field=target_field,
+                skills_list=skills_list,
+                experience_summary=experience_summary,
+                education_summary=education_summary,
+                projects_list=projects_list
+            )
+            
+            return Response(prediction_result, status=status.HTTP_200_OK)
             
         except Resume.DoesNotExist:
             return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)

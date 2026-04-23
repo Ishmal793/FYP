@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block title %}Career Profile - ElevateCareer{% endblock %}
+
+{% block extra_css %}
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .step-container {
+        display: none;
+        animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .step-container.active { display: block; }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .glass-input-premium {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 1.25rem !important;
+        padding: 0.9rem 1.4rem !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.95rem;
+    }
+    .glass-input-premium:focus {
+        border-color: #2563eb !important;
+        background: white !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+        transform: translateY(-2px);
+    }
+
+    .premium-header-banner {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        margin: -3rem -3rem 4rem -3rem;
+        padding: 5rem 3rem;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .premium-header-banner::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.2) 0%, transparent 50%);
+    }
+
+    .step-node-pro {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        transition: all 0.5s ease;
+        position: relative;
+        z-index: 2;
+        color: rgba(255,255,255,0.6);
+    }
+    .step-node-pro.active {
+        background: white;
+        color: #0f172a;
+        transform: scale(1.15) rotate(5deg);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .step-node-pro.completed {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+
+    .pro-label {
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .pro-cb-card {
+        padding: 1rem 1.5rem;
+        border-radius: 1.25rem;
+        border: 1px solid #f1f5f9;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        font-size: 0.9rem;
+        background: #f8fafc;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-check:checked + .pro-cb-card {
+        background: #2563eb !important;
+        color: white !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);
+        transform: translateY(-3px);
+    }
+
+    .is-invalid { border-color: #ef4444 !important; background-color: #fff1f2 !important; }
+
+    .toast-premium {
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        z-index: 9999;
+        background: #ef4444;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 20px 40px rgba(239, 68, 68, 0.2);
+        display: none;
+        animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Background -->
+<div class="mesh-gradient">
+    <div class="mesh-ball-1"></div>
+    <div class="mesh-ball-2"></div>
+</div>
+
+<div id="validation-toast" class="toast-premium">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-shield-exclamation fs-3 me-3"></i>
+        <div>
+            <div class="fw-bold">Validation Error</div>
+            <div class="small">Please complete all required fields.</div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center py-5">
+    <div class="col-lg-9">
+        <div class="glass-card shadow-2xl border-0 overflow-hidden" data-aos="zoom-in" data-aos-duration="1000">
+            
+            <div class="premium-header-banner">
+                <h1 class="display-6 fw-bold mb-4" style="font-family: 'Outfit';">Career Onboarding</h1>
+                <div class="d-flex justify-content-center gap-5 position-relative mt-5">
+                    <div class="position-absolute top-50 start-50 translate-middle w-50" style="height: 1px; background: rgba(255,255,255,0.1); z-index: 1;">
+                        <div id="progress-line" class="h-100 bg-primary transition-all" style="width: 0%; box-shadow: 0 0 10px #2563eb;"></div>
+                    </div>
+                    <div class="step-node-pro active" id="node-1">1</div>
+                    <div class="step-node-pro" id="node-2">2</div>
+                    <div class="step-node-pro" id="node-3">3</div>
+                </div>
+            </div>
+
+            <div class="p-5 pt-0">
+                <div id="alert-container"></div>
+                
+                <form id="questionnaire-form" novalidate>
+                    
+                    <!-- STEP 1 -->
+                    <div class="step-container active" id="step-1">
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-1">Personal Details</h4>
+                            <p class="text-muted small">Let's start with your basic information.</p>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <label class="pro-label">FULL NAME</label>
+                                <input type="text" class="form-control glass-input-premium" id="name" required placeholder="e.g. John Doe">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="pro-label">EMAIL ADDRESS</label>
+                                <input type="email" class="form-control glass-input-premium bg-light text-muted" id="email" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="pro-label">PHONE NUMBER</label>
+                                <input type="text" class="form-control glass-input-premium" id="phone" required placeholder="e.g. +1 555-0123">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="pro-label">DATE OF BIRTH</label>
+                                <input type="date" class="form-control glass-input-premium" id="date_of_birth" required onchange="validateAge()">
+                                <div id="age-error" class="text-danger small mt-2 fw-bold" style="display:none;"><i class="bi bi-info-circle me-1"></i>Age must be 18-40.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="pro-label">RESIDENTIAL ADDRESS</label>
+                                <input type="text" class="form-control glass-input-premium" id="address" required placeholder="e.g. 123 Street, New York">
+                            </div>
+                        </div>
+                        <div class="mt-5 text-end">
+                            <button type="button" class="btn btn-primary px-5 py-3 shadow-lg rounded-4 fw-bold" onclick="nextStep(2)">
+                                Proceed to Education <i class="bi bi-arrow-right-short ms-2 fs-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div class="step-container" id="step-2">
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-1">Academic Profile</h4>
+                            <p class="text-muted small">Your educational background is key to AI matching.</p>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <label class="pro-label">HIGHEST EDUCATION LEVEL</label>
+                                <select class="form-select glass-input-premium" id="education_level" required>
+                                    <option value="" disabled selected>Choose Level</option>
+                                    <option value="High School">High School</option>
+                                    <option value="Diploma">Diploma</option>
+                                    <option value="Bachelor's Degree">Bachelor’s Degree</option>
+                                    <option value="Master's Degree">Master’s Degree</option>
+                                    <option value="PhD">PhD</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="pro-label">FIELD OF STUDY / MAJOR</label>
+                                <input type="text" class="form-control glass-input-premium" id="field_of_study" required placeholder="e.g. Software Engineering">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="pro-label">INSTITUTION NAME</label>
+                                <input type="text" class="form-control glass-input-premium" id="university" required placeholder="e.g. Harvard University">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="pro-label">ENROLLMENT STATUS</label>
+                                <select class="form-select glass-input-premium" id="student_or_graduate" required onchange="updateGradYearLabel()">
+                                    <option value="" disabled selected>Select Status</option>
+                                    <option value="Currently Studying">Currently Studying</option>
+                                    <option value="Graduate">Graduate</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="pro-label" id="grad_year_label">GRADUATION YEAR</label>
+                                <select class="form-select glass-input-premium" id="graduation_year" required>
+                                    <option value="" disabled selected>Select Year</option>
+                                    <option value="2028">2028</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                    <option value="2021">2021</option>
+                                    <option value="2020">2020</option>
+                                    <option value="Before 2020">Before 2020</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="pro-label">CGPA / PERCENTAGE (OPTIONAL)</label>
+                                <input type="text" class="form-control glass-input-premium" id="cgpa" placeholder="e.g. 3.8 / 4.0">
+                            </div>
+                        </div>
+                        <div class="mt-5 d-flex justify-content-between">
+                            <button type="button" class="btn btn-light px-4 py-3 border-0 rounded-4 fw-bold" onclick="prevStep(1)">Back</button>
+                            <button type="button" class="btn btn-primary px-5 py-3 shadow-lg rounded-4 fw-bold" onclick="nextStep(3)">
+                                Next Phase <i class="bi bi-arrow-right-short ms-2 fs-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div class="step-container" id="step-3">
+                        <div class="mb-5">
+                            <h4 class="fw-bold mb-1">Career Aspirations</h4>
+                            <p class="text-muted small">Tell us what you're looking for in your next role.</p>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="pro-label">CAREER LEVEL</label>
+                                <select class="form-select glass-input-premium" id="career_level" required>
+                                    <option value="" disabled selected>Select Level</option>
+                                    <option value="Entry Level">Entry Level</option>
+                                    <option value="Junior">Junior</option>
+                                    <option value="Mid-Level">Mid-Level</option>
+                                    <option value="Senior">Senior</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="pro-label">YEARS OF EXPERIENCE</label>
+                                <select class="form-select glass-input-premium" id="experience" required>
+                                    <option value="" disabled selected>Select Duration</option>
+                                    <option value="0 years">0 years</option>
+                                    <option value="1-2 years">1–2 years</option>
+                                    <option value="3-5 years">3–5 years</option>
+                                    <option value="5-8 years">5–8 years</option>
+                                    <option value="8+ years">8+ years</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="pro-label">TARGET JOB ROLE</label>
+                                <input type="text" class="form-control glass-input-premium" id="target_job_role" required placeholder="e.g. Backend Developer">
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="pro-label mb-3">PREFERRED JOB TYPES</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <input type="checkbox" class="btn-check job-type-cb" id="type_fulltime" value="Full-time">
+                                    <label class="pro-cb-card" for="type_fulltime">Full-time</label>
+                                    
+                                    <input type="checkbox" class="btn-check job-type-cb" id="type_parttime" value="Part-time">
+                                    <label class="pro-cb-card" for="type_parttime">Part-time</label>
+                                    
+                                    <input type="checkbox" class="btn-check job-type-cb" id="type_internship" value="Internship">
+                                    <label class="pro-cb-card" for="type_internship">Internship</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="pro-label mb-3">WORK PREFERENCES</label>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <input type="checkbox" class="btn-check location-cb" id="loc_remote" value="Remote">
+                                    <label class="pro-cb-card" for="loc_remote"><i class="bi bi-house-door me-2"></i>Remote</label>
+                                    
+                                    <input type="checkbox" class="btn-check location-cb" id="loc_onsite" value="On-site">
+                                    <label class="pro-cb-card" for="loc_onsite"><i class="bi bi-building me-2"></i>On-site</label>
+                                    
+                                    <input type="checkbox" class="btn-check location-cb" id="loc_hybrid" value="Hybrid">
+                                    <label class="pro-cb-card" for="loc_hybrid"><i class="bi bi-briefcase me-2"></i>Hybrid</label>
+                                </div>
+                                <input type="text" class="form-control glass-input-premium" id="loc_city_country" placeholder="Preferred City (e.g. Lahore)">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="pro-label mb-3">INDUSTRIES OF INTEREST</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <input type="checkbox" class="btn-check industry-cb" id="ind_it" value="IT / Software">
+                                    <label class="pro-cb-card" for="ind_it">IT / Software</label>
+                                    
+                                    <input type="checkbox" class="btn-check industry-cb" id="ind_finance" value="Finance">
+                                    <label class="pro-cb-card" for="ind_finance">Finance</label>
+                                    
+                                    <input type="checkbox" class="btn-check industry-cb" id="ind_health" value="Healthcare">
+                                    <label class="pro-cb-card" for="ind_health">Healthcare</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-5 d-flex justify-content-between">
+                            <button type="button" class="btn btn-light px-4 py-3 border-0 rounded-4 fw-bold" onclick="prevStep(2)">Back</button>
+                            <button type="submit" class="btn btn-success px-5 py-3 shadow-lg fw-bold rounded-4" id="submit-btn">
+                                Complete Onboarding <i class="bi bi-check-circle-fill ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    let currentStep = 1;
+    const token = localStorage.getItem('access');
+
+    function updateGradYearLabel() {
+        const status = document.getElementById('student_or_graduate').value;
+        const label = document.getElementById('grad_year_label');
+        label.innerText = (status === 'Currently Studying') ? 'EXPECTED GRADUATION YEAR' : 'GRADUATION YEAR';
+    }
+
+    function updateProgress(step) {
+        const line = document.getElementById('progress-line');
+        const percentages = {1: '0%', 2: '50%', 3: '100%'};
+        line.style.width = percentages[step];
+
+        for(let i=1; i<=3; i++) {
+            const node = document.getElementById(`node-${i}`);
+            node.classList.remove('active', 'completed');
+            if(i < step) node.classList.add('completed');
+            if(i === step) node.classList.add('active');
+        }
+    }
+
+    function showValidationToast() {
+        const toast = document.getElementById('validation-toast');
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function validateAge() {
+        const dobInput = document.getElementById('date_of_birth');
+        const errorDiv = document.getElementById('age-error');
+        if (!dobInput.value) return false;
+        
+        const dob = new Date(dobInput.value);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        if (age < 18 || age > 40) {
+            errorDiv.style.display = 'block';
+            dobInput.classList.add('is-invalid');
+            return false;
+        } else {
+            errorDiv.style.display = 'none';
+            dobInput.classList.remove('is-invalid');
+            return true;
+        }
+    }
+
+    function validateStep(step) {
+        const container = document.getElementById(`step-${step}`);
+        const inputs = container.querySelectorAll('input[required], select[required]');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        if (step === 1 && !validateAge()) isValid = false;
+        if (!isValid) showValidationToast();
+        return isValid;
+    }
+
+    function nextStep(step) {
+        if (validateStep(currentStep)) {
+            showStep(step);
+        }
+    }
+
+    function showStep(step) {
+        document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step-${step}`).classList.add('active');
+        updateProgress(step);
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function prevStep(step) { showStep(step); }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        AOS.init();
+        if (!token) { window.location.href = '/login/'; return; }
+
+        try {
+            const profileRes = await fetch('/api/auth/profile/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                document.getElementById('email').value = profileData.email;
+            }
+        } catch(e) {}
+
+        document.getElementById('questionnaire-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validateStep(3)) return;
+
+            const preferred_job_type = Array.from(document.querySelectorAll('.job-type-cb:checked')).map(cb => cb.value);
+            const preferred_locations = Array.from(document.querySelectorAll('.location-cb:checked')).map(cb => cb.value);
+            const interested_industries = Array.from(document.querySelectorAll('.industry-cb:checked')).map(cb => cb.value);
+            const loc_city_country = document.getElementById('loc_city_country').value.trim();
+            if (loc_city_country) preferred_locations.push(loc_city_country);
+
+            const payload = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                date_of_birth: document.getElementById('date_of_birth').value,
+                address: document.getElementById('address').value,
+                education_level: document.getElementById('education_level').value,
+                university: document.getElementById('university').value,
+                field_of_study: document.getElementById('field_of_study').value,
+                student_or_graduate: document.getElementById('student_or_graduate').value,
+                graduation_year: document.getElementById('graduation_year').value,
+                cgpa: document.getElementById('cgpa').value || null,
+                career_level: document.getElementById('career_level').value,
+                experience: document.getElementById('experience').value,
+                target_job_role: document.getElementById('target_job_role').value,
+                preferred_job_type: preferred_job_type,
+                preferred_locations: preferred_locations,
+                interested_industries: interested_industries
+            };
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving Data...';
+
+            try {
+                const res = await fetch('/api/auth/career-profile/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) { window.location.href = '/home/'; }
+                else {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Complete Onboarding <i class="bi bi-check-circle-fill ms-2"></i>';
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Complete Onboarding <i class="bi bi-check-circle-fill ms-2"></i>';
+            }
+        });
+    });
+</script>
+{% endblock %}

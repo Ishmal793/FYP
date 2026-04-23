@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Job Intelligence Engine - ElevateCareer{% endblock %}
+{% load static %}
+{% block extra_css %}
+<style>
+    .resume-card { transition: all 0.2s ease; cursor: pointer; }
+    .resume-card:hover { border-color: #0d6efd !important; box-shadow: 0 .125rem .25rem rgba(13,110,253,.25)!important; }
+    .resume-card.selected { border-color: #0d6efd !important; background-color: rgba(13,110,253,.05); border-width: 2px !important; }
+    .hover-elevate { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-elevate:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+    <div class="col-md-8">
+        <h1 class="fw-bold fs-3 mb-1"><i class="bi bi-briefcase-fill text-success me-2"></i>Job Intelligence Engine</h1>
+        <p class="text-muted-custom mb-0">Fast fetching, deterministic matching, and deep market analysis.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="/dashboard/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-house me-1"></i>Back to Hub</a>
+    </div>
+</div>
+
+<div class="row" id="dashboard-content">
+    <div class="col-12">
+        <!-- UI Workflow Timeline -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between position-relative text-center fw-medium flex-nowrap overflow-x-auto pb-2 custom-scrollbar" style="min-width: 600px;">
+                    <!-- Progress Line Background -->
+                    <div class="position-absolute top-50 start-0 end-0 translate-middle-y bg-secondary bg-opacity-10" style="height: 4px; z-index: 0; left: 5% !important; right: 5% !important; border-radius: 2px;"></div>
+                    <!-- Active Progress Line -->
+                    <div id="workflow-progress-line" class="position-absolute top-50 start-0 translate-middle-y bg-gradient text-white" style="background: linear-gradient(90deg, #198754, #20c997); height: 4px; z-index: 1; left: 5% !important; width: 0%; transition: width 0.5s ease; border-radius: 2px;"></div>
+
+                    <!-- Steps -->
+                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
+                        <div id="step-1-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-white shadow-sm ring-4 ring-green-100" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease; background: linear-gradient(to top right, #198754, #20c997);">
+                            <i class="bi bi-file-person small"></i>
+                        </div>
+                        <h6 class="small fw-bold mb-0 text-success" id="step-1-text" style="font-size: 11px;">Resume</h6>
+                    </div>
+                    
+                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
+                        <div id="step-2-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
+                            <i class="bi bi-search small"></i>
+                        </div>
+                        <h6 class="small fw-bold mb-0 text-secondary" id="step-2-text" style="font-size: 11px;">Jobs</h6>
+                    </div>
+
+                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
+                        <div id="step-3-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
+                            <i class="bi bi-lightning-charge small"></i>
+                        </div>
+                        <h6 class="small fw-bold mb-0 text-secondary" id="step-3-text" style="font-size: 11px;">Match</h6>
+                    </div>
+
+                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
+                        <div id="step-4-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
+                            <i class="bi bi-cpu small"></i>
+                        </div>
+                        <h6 class="small fw-bold mb-0 text-secondary" id="step-4-text" style="font-size: 11px;">Deep ATS</h6>
+                    </div>
+
+                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
+                        <div id="step-5-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
+                            <i class="bi bi-cpu-fill small"></i>
+                        </div>
+                        <h6 class="small fw-bold mb-0 text-secondary" id="step-5-text" style="font-size: 11px;">Skill Analysis</h6>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 1: Resume Selection -->
+        <div class="card p-4 shadow-sm border-0 mb-4 bg-white" id="stage-1-resume">
+            <h5 class="fw-bold mb-3 pb-2 border-bottom text-success"><i class="bi bi-file-person me-2"></i>Select ATS Profile</h5>
+            <div id="loading-resumes" class="text-center py-4">
+                <span class="spinner-border spinner-border-sm text-success"></span> Loading computed resumes...
+            </div>
+            <div id="no-resumes-warning" class="alert alert-danger" style="display: none;">
+                <i class="bi bi-shield-x me-2"></i> Access Denied. No ATS-completed resumes found. <a href="/dashboard/ats/" class="fw-bold text-danger text-decoration-underline ms-2">Go to ATS Engine</a>
+            </div>
+            <div class="row g-3" id="resumes-list"></div>
+            <div class="mt-4 text-end">
+                <button class="btn btn-success fw-bold disabled" id="proceed-btn-1" onclick="goToStage(2)">
+                    Next: Job Preferences <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stage 2: Job Preferences -->
+        <div class="card p-4 shadow-sm border-0 mb-4 bg-white" id="stage-2-prefs" style="display: none;">
+            <h5 class="fw-bold mb-3 pb-2 text-success border-bottom"><i class="bi bi-ui-radios me-2"></i>Job Targets & Preferences</h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Target Keyword</label>
+                    <input type="text" class="form-control" id="job-target-field" placeholder="e.g. Backend Developer">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Target City / Country</label>
+                    <input type="text" class="form-control" id="job-location" value="Remote">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Job Type</label>
+                    <select class="form-select" id="job-type">
+                        <option value="Any">Any</option>
+                        <option value="Remote">Remote</option>
+                        <option value="Onsite">Onsite</option>
+                        <option value="Hybrid">Hybrid</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Time Filter</label>
+                    <select class="form-select" id="job-time">
+                        <option value="Any time">Any time</option>
+                        <option value="Today">Today</option>
+                        <option value="3 Days">Past 3 Days</option>
+                        <option value="Week">Past Week</option>
+                    </select>
+                </div>
+                
+                <div class="col-12 mt-4 text-end">
+                    <button class="btn btn-secondary fw-bold px-4 shadow-sm me-2" onclick="goToStage(1)">Back</button>
+                    <button class="btn btn-success fw-bold px-4 text-white shadow-sm" id="search-live-jobs-btn" onclick="fetchAndScoreJobs()">
+                        <i class="bi bi-search me-2"></i>Fetch & Fast Match
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 3: Fast Match Results -->
+        <div class="card p-4 shadow-sm border-0 mb-4 bg-body-tertiary" id="stage-3-results" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <h5 class="fw-bold text-success mb-0"><i class="bi bi-lightning-charge me-2"></i>Ranked Job Matches</h5>
+                <span id="low-job-warning" class="badge bg-warning text-dark px-3 py-2 d-none"><i class="bi bi-exclamation-triangle-fill me-1"></i>Low job availability for this role</span>
+            </div>
+            
+            <div id="fetching-jobs-loader" class="text-center py-5 d-none">
+                <div class="spinner-grow text-success mb-3" style="width: 3rem; height: 3rem;"></div>
+                <h5 class="fw-bold text-success" id="loading-status-text">🔍 Finding jobs...</h5>
+                <p class="text-muted small">Please wait while we connect to live market data.</p>
+            </div>
+            
+            <div id="live-jobs-list" class="row g-3 mb-4"></div>
+        </div>
+
+        <!-- Stage 4-6: Deep Analysis Container -->
+        <div id="deep-analysis-container" style="display: none;">
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary fw-bold" onclick="backToJobs()"><i class="bi bi-arrow-left me-1"></i>Back to Jobs List</button>
+            </div>
+            <div class="row g-4">
+                <!-- Deep ATS Stage -->
+                <div class="col-12" id="stage-4-container" style="display: none;">
+                    <div class="card p-4 shadow-sm border-0 bg-white">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <h5 class="fw-bold text-primary mb-0"><i class="bi bi-cpu-fill me-2"></i>Deep ATS Analysis</h5>
+                            <button class="btn btn-primary btn-sm fw-bold px-4 shadow-sm" id="btn-next-skills" onclick="goToStage(5)" style="display: none;">Next: Skill Analysis <i class="bi bi-arrow-right ms-1"></i></button>
+                        </div>
+                        
+                        <div id="deep-ats-loader" class="text-center py-5 d-none">
+                            <span class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></span>
+                            <h5 class="fw-bold text-primary">AI scoring in progress...</h5>
+                            <p class="small text-muted">Running full deterministic analysis against your resume.</p>
+                        </div>
+                        
+                        <div id="deep-ats-results" class="d-none">
+                            <!-- ATS Scoring Only -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skill Analysis Stage -->
+                <div class="col-12" id="stage-5-container" style="display: none;">
+                    <div class="card p-4 shadow-sm border-0 bg-white">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <h5 class="fw-bold text-info mb-0"><i class="bi bi-cpu-fill me-2"></i>Skill Analysis Insights</h5>
+                            <button class="btn btn-secondary btn-sm fw-bold px-4 shadow-sm" onclick="goToStage(4)"><i class="bi bi-arrow-left me-1"></i>Back to ATS Score</button>
+                        </div>
+                        
+                        <div id="skill-analysis-results">
+                            <!-- Skill Data Move here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/job_search_workflow.js' %}?v={% now 'U' %}"></script>
+<style>
+    .text-purple { color: #8b5cf6 !important; }
+    .btn-purple { background-color: #8b5cf6; color: white; border: none; }
+    .btn-purple:hover { background-color: #7c3aed; color: white; }
+    .btn-outline-purple { color: #8b5cf6; border-color: #8b5cf6; }
+    .btn-outline-purple:hover { background-color: #8b5cf6; color: white; }
+    .ring-4 { box-shadow: 0 0 0 4px rgba(0,0,0,0.1); }
+    .ring-green-100 { box-shadow: 0 0 0 4px #d1e7dd; }
+</style>
+    <!-- Manual ATS Modal -->
+    <div class="modal fade" id="manualATSModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Analyze Job for ATS</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Please paste the full job description from the original job posting below for a more accurate ATS analysis.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Job Description</label>
+                        <textarea class="form-control" id="manual-jd-text" rows="10" placeholder="Paste the job description here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-purple fw-bold" id="manual-ats-btn" onclick="submitManualATS()">Analyze ATS Score</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

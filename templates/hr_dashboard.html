@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Recruiter Portal - ElevateCareer{% endblock %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .search-panel {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 30px;
+    }
+    .candidate-card {
+        transition: transform 0.2s ease;
+        border-radius: 12px;
+    }
+    .candidate-card:hover {
+        transform: scale(1.01);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .ats-score-badge {
+        font-size: 1.2rem;
+        padding: 10px 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="fw-bold"><i class="bi bi-briefcase-fill text-primary me-2"></i>Recruiter Portal</h1>
+            <p class="text-muted">Find and rank candidates using our Hybrid AI semantic search engine.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="card border-0 shadow-sm p-3 bg-primary text-white rounded-4">
+                <h6 class="mb-0">Searchable Candidates</h6>
+                <h2 class="fw-bold mb-0" id="total-candidates">--</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Panel -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="search-panel shadow-sm">
+                <form id="hr-search-form">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Target Job Title</label>
+                            <input type="text" id="job-title" class="form-control form-control-lg border-0 shadow-sm" placeholder="e.g. Senior Python Developer" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Job Description (Semantic Focus)</label>
+                            <textarea id="job-description" class="form-control border-0 shadow-sm" rows="3" placeholder="Paste the core requirements and responsibilities here..." required></textarea>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
+                                <i class="bi bi-cpu me-2"></i>Run Hybrid AI Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="loading" class="text-center py-5 d-none">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Searching...</span>
+        </div>
+        <p class="mt-3 text-muted">Analyzing candidates via FAISS & LLM Ranking...</p>
+    </div>
+
+    <div id="results-container" class="row g-4">
+        <!-- Candidate Cards will be injected here -->
+    </div>
+</div>
+
+<!-- Candidate Detail Modal -->
+<div class="modal fade" id="candidateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modal-name">Candidate Name</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="modal-body">
+                <!-- Detail content -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('hr-search-form');
+    const loading = document.getElementById('loading');
+    const resultsContainer = document.getElementById('results-container');
+    const totalCandidatesEl = document.getElementById('total-candidates');
+
+    // Fetch Stats
+    fetch('/api/hr-module/dashboard/', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access')}` }
+    })
+    .then(r => r.json())
+    .then(data => {
+        totalCandidatesEl.textContent = data.total_candidates;
+    });
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const payload = {
+            job_title: document.getElementById('job-title').value,
+            job_description: document.getElementById('job-description').value
+        };
+
+        resultsContainer.innerHTML = '';
+        loading.classList.remove('d-none');
+
+        fetch('/api/hr-module/job-match/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('access')}`
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            loading.classList.add('d-none');
+            if (data.ranked_candidates) {
+                renderCandidates(data.ranked_candidates);
+            }
+        });
+    });
+
+    function renderCandidates(candidates) {
+        if (candidates.length === 0) {
+            resultsContainer.innerHTML = '<div class="col-12 text-center text-muted py-5">No matching candidates found.</div>';
+            return;
+        }
+
+        candidates.forEach(c => {
+            const card = `
+                <div class="col-md-6">
+                    <div class="card candidate-card border-0 shadow-sm h-100 bg-white">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4 class="fw-bold mb-1">${c.candidate_name}</h4>
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Top 20 Match</span>
+                                </div>
+                                <div class="badge bg-primary ats-score-badge rounded-4 shadow-sm">
+                                    ${c.ats_score}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="text-uppercase fw-bold text-muted small">Matched Skills</h6>
+                                <div class="d-flex flex-wrap gap-1">
+                                    ${c.matched_skills.map(s => `<span class="badge bg-light text-dark border">${s}</span>`).join('')}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6 class="text-uppercase fw-bold text-muted small">AI Reasoning</h6>
+                                <p class="text-dark small mb-0">${c.ranking_reason}</p>
+                            </div>
+
+                            <button onclick="viewDetail(${c.candidate_id})" class="btn btn-outline-primary w-100 rounded-pill">
+                                View Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsContainer.insertAdjacentHTML('beforeend', card);
+        });
+    }
+
+    window.viewDetail = function(userId) {
+        fetch(`/api/hr-module/candidate/${userId}/`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('access')}` }
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('modal-name').textContent = data.name;
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <div class="mb-4">
+                    <h6 class="fw-bold text-primary">Experience</h6>
+                    <ul class="list-unstyled">
+                        ${data.experience.map(e => `<li><strong>${e.job_title}</strong> at ${e.company} (${e.duration})</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="mb-4">
+                    <h6 class="fw-bold text-primary">Skills</h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${data.skills.map(s => `<span class="badge bg-light text-dark border">${s.name}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <a href="${data.linkedin}" target="_blank" class="btn btn-primary rounded-pill px-5">
+                        <i class="bi bi-linkedin me-2"></i>Contact via LinkedIn
+                    </a>
+                    <p class="small text-muted mt-2">Privacy Shield: Contact details hidden.</p>
+                </div>
+            `;
+            new bootstrap.Modal(document.getElementById('candidateModal')).show();
+        });
+    }
+});
+</script>
+{% endblock %}

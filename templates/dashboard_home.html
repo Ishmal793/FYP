@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Home - ElevateCareer{% endblock %}
+{% load static %}
+{% block extra_css %}
+<style>
+    .module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
+        cursor: pointer;
+        min-height: 250px;
+    }
+    .module-card:hover:not(.locked) {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .module-card.locked {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    #job-lock-overlay {
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+        z-index: 10;
+        display: flex !important; /* Always flex, but handle visibility via opacity */
+    }
+    #job-lock-overlay.unlocked {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-5 text-center">
+    <div class="col-12">
+        <h1 class="fw-bold display-6 mb-2">Career Hub</h1>
+        <p class="text-muted fs-5">Select a module below to proceed with your career journey.</p>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center" id="dashboard-modules" style="display: none;">
+    <!-- ATS Intelligence Module -->
+    <div class="col-md-5" id="ats-module-col">
+        <div class="card module-card border-0 shadow-sm rounded-4 h-100 bg-white" onclick="window.location.href='/dashboard/ats/'">
+            <div class="card-body p-5 text-center">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-primary">
+                    <i class="bi bi-robot fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-3">ATS Intelligence</h3>
+                <p class="text-muted mb-0">Upload your resume to perform strict ATS scoring, market skill gap analysis, and AI optimization.</p>
+                
+                <div class="mt-4">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 rounded-pill">Step 1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Search Module -->
+    <div class="col-md-5" id="job-search-col">
+        <div class="card module-card border-0 shadow-sm rounded-4 h-100 bg-white" id="job-search-card" onclick="handleJobSearchClick()">
+            <div class="card-body p-5 text-center position-relative">
+                <div id="job-lock-overlay" class="position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-75 d-flex align-items-center justify-content-center rounded-4">
+                    <div class="text-center p-3">
+                        <i class="bi bi-lock-fill text-secondary fs-1 mb-2"></i>
+                        <h5 class="fw-bold text-dark mb-1">Locked</h5>
+                        <p class="small text-muted mb-0 mx-auto" style="max-width: 200px;">Complete ATS Analysis first to unlock Job Search</p>
+                    </div>
+                </div>
+
+                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-success">
+                    <i class="bi bi-search fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-3">Job Search</h3>
+                <p class="text-muted mb-0">Discover live market jobs, calculate real-time match scores, and find your next opportunity.</p>
+                
+                <div class="mt-4">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill">Step 2</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HR Recruiter Module (Hidden for job seekers) -->
+    <div class="col-md-5 d-none" id="hr-recruiter-card">
+        <div class="card module-card border-0 shadow-sm rounded-4 h-100 bg-white" onclick="window.location.href='/dashboard/hr/'">
+            <div class="card-body p-5 text-center">
+                <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-info">
+                    <i class="bi bi-people-fill fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-3">Recruiter Portal</h3>
+                <p class="text-muted mb-0">Search, filter, and rank candidates using Hybrid AI semantic search. Post jobs and find talent.</p>
+                <div class="mt-4">
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info px-3 py-2 rounded-pill">HR Access</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard_home.js' %}?v={% now 'U' %}"></script>
+{% endblock %}

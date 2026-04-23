@@ -1,99 +1,350 @@
 {% extends "base.html" %}
 {% block title %}Sign up - ElevateCareer{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --seeker-primary: #2563eb;
+        --seeker-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        --hr-primary: #059669;
+        --hr-gradient: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+    }
+
+    body {
+        background-color: #f8fafc;
+        overflow-x: hidden;
+    }
+    
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+    }
+
+    .auth-side-panel {
+        background: var(--seeker-gradient);
+        flex: 1.2;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        padding: 6rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (min-width: 992px) {
+        .auth-side-panel { display: flex; }
+    }
+
+    .auth-form-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background: white;
+        position: relative;
+    }
+
+    .signup-card-pro {
+        width: 100%;
+        max-width: 500px;
+        animation: fadeInRight 0.8s ease;
+    }
+
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .glass-input-pro {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 1rem !important;
+        padding: 0.9rem 1.4rem !important;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .glass-input-pro:focus {
+        background: white !important;
+        border-color: var(--active-color, #2563eb) !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+    }
+
+    .role-badge-pro {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.6rem 1.5rem;
+        border-radius: 2rem;
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 2rem;
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--active-color, #2563eb);
+        transition: all 0.3s ease;
+    }
+
+    .btn-auth-pro {
+        background: var(--active-color, #2563eb);
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
+    }
+    .btn-auth-pro:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.4);
+        opacity: 0.95;
+    }
+
+    .abstract-shape {
+        position: absolute;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card auth-card mt-2">
-            <div class="card-body p-4 p-sm-5">
-                <div class="text-center mb-4">
-                    <h2 class="fw-bold mb-1">Create an account</h2>
-                    <p class="text-muted-custom">Start accelerating your career today</p>
+</div> <!-- Close default container -->
+
+<div class="auth-wrapper">
+    <!-- Left Side: Branding & Dynamic Content -->
+    <div class="auth-side-panel" id="side-panel">
+        <div class="abstract-shape" style="top: -50px; right: -50px;"></div>
+        <div class="abstract-shape" style="bottom: -50px; left: -50px;"></div>
+
+        <div class="mb-5 position-relative">
+            <a class="navbar-brand text-white fs-3 fw-bold" href="/">
+                <i class="bi bi-rocket-takeoff-fill me-2"></i> ElevateCareer
+            </a>
+        </div>
+        
+        <div id="seeker-text" class="position-relative">
+            <h1 class="display-4 fw-bold mb-4" style="font-family: 'Outfit';">Unlock Your <br>Full Potential.</h1>
+            <p class="lead text-white-50 mb-5">Connect with the world's most innovative companies and build a career that matters.</p>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-white bg-opacity-10 p-3 rounded-4 me-4 border border-white border-opacity-10"><i class="bi bi-stars fs-4"></i></div>
+                <div>
+                    <h6 class="mb-0 fw-bold">AI Skill Mapping</h6>
+                    <p class="small text-white-50 mb-0">Visualize your path to the top.</p>
                 </div>
-                <div id="alert-container"></div>
-                <form id="signup-form">
+            </div>
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-white bg-opacity-10 p-3 rounded-4 me-4 border border-white border-opacity-10"><i class="bi bi-shield-check fs-4"></i></div>
+                <div>
+                    <h6 class="mb-0 fw-bold">Verified Profiles</h6>
+                    <p class="small text-white-50 mb-0">Trust-based matching for serious pros.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="hr-text" class="d-none position-relative">
+            <h1 class="display-4 fw-bold mb-4" style="font-family: 'Outfit';">The Future of <br>Recruitment.</h1>
+            <p class="lead text-white-50 mb-5">Identify the perfect cultural and technical fit using our proprietary semantic AI engine.</p>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-white bg-opacity-10 p-3 rounded-4 me-4 border border-white border-opacity-10"><i class="bi bi-search fs-4"></i></div>
+                <div>
+                    <h6 class="mb-0 fw-bold">Deep Talent Search</h6>
+                    <p class="small text-white-50 mb-0">Find the hidden gems in seconds.</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-white bg-opacity-10 p-3 rounded-4 me-4 border border-white border-opacity-10"><i class="bi bi-graph-up fs-4"></i></div>
+                <div>
+                    <h6 class="mb-0 fw-bold">Pipeline Intelligence</h6>
+                    <p class="small text-white-50 mb-0">Optimize your hiring velocity.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-5 border-top border-white border-opacity-10 position-relative">
+            <div class="d-flex gap-4">
+                <div class="small text-white-50">Enterprise Grade Security</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Signup Form -->
+    <div class="auth-form-panel">
+        <div class="signup-card-pro">
+            <div id="role-indicator" class="role-badge-pro">
+                <i class="bi bi-check-circle-fill me-2"></i> Registering as <span id="role-text" class="ms-1">Job Seeker</span>
+            </div>
+
+            <div class="mb-5">
+                <h2 class="fw-bold mb-2" style="font-family: 'Outfit';">Get Started</h2>
+                <p class="text-muted">Fill in the details below to create your account.</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="signup-form">
+                <input type="hidden" id="role" value="job_seeker">
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase mb-2 text-muted" style="letter-spacing: 1px;">Corporate Email</label>
+                    <input type="email" class="form-control glass-input-pro" id="email" required placeholder="john@example.com">
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold small text-uppercase mb-2 text-muted" style="letter-spacing: 1px;">Password</label>
+                        <input type="password" class="form-control glass-input-pro" id="password" required placeholder="••••••••">
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold small text-uppercase mb-2 text-muted" style="letter-spacing: 1px;">Confirm</label>
+                        <input type="password" class="form-control glass-input-pro" id="confirm_password" required placeholder="••••••••">
+                    </div>
+                </div>
+
+                <!-- HR Fields -->
+                <div id="hr-fields" class="bg-light p-4 rounded-4 mb-4 border d-none" style="background-color: #f0fdf4 !important; border-color: #dcfce7 !important;">
+                    <h6 class="fw-bold mb-4 small text-uppercase text-success"><i class="bi bi-building-check me-2"></i>Organization Details</h6>
                     <div class="mb-3">
-                        <label class="form-label fw-medium small">Email address</label>
-                        <input type="email" class="form-control" id="email" required placeholder="name@example.com">
+                        <label class="form-label fw-medium small">Full Name</label>
+                        <input type="text" class="form-control glass-input-pro hr-input" id="hr_name" placeholder="John Doe">
                     </div>
-                    <div class="row">
+                    <div class="row g-3">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium small">Password</label>
-                            <input type="password" class="form-control" id="password" required placeholder="••••••••">
+                            <label class="form-label fw-medium small">Company Name</label>
+                            <input type="text" class="form-control glass-input-pro hr-input" id="hr_company" placeholder="E.g. Microsoft">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium small">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirm_password" required
-                                placeholder="••••••••">
+                            <label class="form-label fw-medium small">Job Title</label>
+                            <input type="text" class="form-control glass-input-pro hr-input" id="hr_designation" placeholder="E.g. Recruiter">
                         </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-medium small">Account Type</label>
-                        <select class="form-select" id="role" required>
-                            <option value="job_seeker" selected>Job Seeker</option>
-                            <option value="hr">HR / Recruiter</option>
-                        </select>
+                    <div class="mb-0">
+                        <label class="form-label fw-medium small">Contact Number</label>
+                        <input type="text" class="form-control glass-input-pro hr-input" id="hr_phone" placeholder="+1 (555) 000-0000">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100" id="submit-btn" style="padding: 12px;">Sign
-                        up</button>
-                </form>
-                <div class="text-center mt-4 text-muted-custom small">
-                    Already have an account? <a href="/login/" class="text-decoration-none fw-medium text-primary">Log
-                        in</a>
                 </div>
+
+                <button type="submit" class="btn btn-auth-pro w-100 py-3 mt-2" id="submit-btn">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="text-center mt-5">
+                <p class="text-muted small">Already a member? <a href="/login/" class="fw-bold text-decoration-none ms-1" style="color: var(--active-color, #2563eb);">Sign In</a></p>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container d-none">
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const confirm_password = document.getElementById('confirm_password').value;
-        const role = document.getElementById('role').value;
+    function setRole(role) {
+        const roleInput = document.getElementById('role');
+        const roleText = document.getElementById('role-text');
+        const roleBadge = document.getElementById('role-indicator');
+        const hrFields = document.getElementById('hr-fields');
+        const hrInputs = document.querySelectorAll('.hr-input');
+        const sidePanel = document.getElementById('side-panel');
+        const seekerText = document.getElementById('seeker-text');
+        const hrText = document.getElementById('hr-text');
+        const submitBtn = document.getElementById('submit-btn');
 
-        const btn = document.getElementById('submit-btn');
-        const alertContainer = document.getElementById('alert-container');
+        roleInput.value = role;
 
-        if (password !== confirm_password) {
-            alertContainer.innerHTML = `<div class="alert alert-warning py-2 small rounded-3">Passwords do not match.</div>`;
-            return;
+        if (role === 'hr') {
+            document.documentElement.style.setProperty('--active-color', '#059669');
+            roleText.innerText = 'HR / Recruiter';
+            roleBadge.style.background = 'rgba(5, 150, 105, 0.1)';
+            sidePanel.style.background = 'var(--hr-gradient)';
+            seekerText.classList.add('d-none');
+            hrText.classList.remove('d-none');
+            hrFields.classList.remove('d-none');
+            hrInputs.forEach(el => el.setAttribute('required', 'required'));
+            submitBtn.style.background = 'var(--hr-primary)';
+            submitBtn.style.boxShadow = '0 10px 20px -5px rgba(5, 150, 105, 0.3)';
+        } else {
+            document.documentElement.style.setProperty('--active-color', '#2563eb');
+            roleText.innerText = 'Job Seeker';
+            roleBadge.style.background = 'rgba(37, 99, 235, 0.1)';
+            sidePanel.style.background = 'var(--seeker-gradient)';
+            seekerText.classList.remove('d-none');
+            hrText.classList.add('d-none');
+            hrFields.classList.add('d-none');
+            hrInputs.forEach(el => el.removeAttribute('required'));
+            submitBtn.style.background = 'var(--seeker-primary)';
+            submitBtn.style.boxShadow = '0 10px 20px -5px rgba(37, 99, 235, 0.3)';
         }
+    }
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating account...';
-        alertContainer.innerHTML = '';
+    document.addEventListener('DOMContentLoaded', () => {
+        AOS.init();
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get('role');
+        if (role === 'hr') setRole('hr');
 
-        try {
-            const response = await fetch('/api/auth/register/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, role })
-            });
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirm_password = document.getElementById('confirm_password').value;
+            const role = document.getElementById('role').value;
 
-            const data = await response.json();
+            const btn = document.getElementById('submit-btn');
+            const alertContainer = document.getElementById('alert-container');
 
-            if (response.ok) {
-                alertContainer.innerHTML = `<div class="alert alert-success py-2 small rounded-3">Account created successfully! Redirecting to login...</div>`;
-                setTimeout(() => { window.location.href = '/login/'; }, 1500);
-            } else {
-                let errorMsg = 'Error creating account.';
-                if (data.email) errorMsg = data.email[0];
-                else if (data.password) errorMsg = data.password[0];
-                alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">${errorMsg}</div>`;
+            if (password !== confirm_password) {
+                alertContainer.innerHTML = `<div class="alert alert-warning py-2 small rounded-3 border-0 shadow-sm"><i class="bi bi-exclamation-triangle-fill me-2"></i>Passwords do not match.</div>`;
+                return;
             }
-        } catch (err) {
-            alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">Connection error. Please try again.</div>`;
-        } finally {
-            if (btn.innerHTML !== 'Success') {
+
+            let payload = { email, password, role };
+            if (role === 'hr') {
+                payload.name = document.getElementById('hr_name').value;
+                payload.company_name = document.getElementById('hr_company').value;
+                payload.designation = document.getElementById('hr_designation').value;
+                payload.phone = document.getElementById('hr_phone').value;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Finalizing...';
+            alertContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/auth/register/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alertContainer.innerHTML = `<div class="alert alert-success py-2 small rounded-3 border-0 shadow-sm"><i class="bi bi-check-circle-fill me-2"></i>Welcome aboard! Redirecting...</div>`;
+                    setTimeout(() => { window.location.href = '/login/'; }, 1500);
+                } else {
+                    let errorMsg = 'Registration failed.';
+                    if (data.email) errorMsg = data.email[0];
+                    else if (data.password) errorMsg = data.password[0];
+                    alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3 border-0 shadow-sm"><i class="bi bi-x-circle-fill me-2"></i>${errorMsg}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = 'Create Account';
+                }
+            } catch (err) {
+                alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3 border-0 shadow-sm"><i class="bi bi-wifi-off me-2"></i>Connection error.</div>`;
                 btn.disabled = false;
-                btn.innerHTML = 'Sign up';
+                btn.innerHTML = 'Create Account';
             }
-        }
+        });
     });
 </script>
 {% endblock %}

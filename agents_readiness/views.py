@@ -11,6 +11,7 @@ class ReadinessScoreView(APIView):
 
     def post(self, request, *args, **kwargs):
         resume_id = request.data.get('resume_id')
+        target_field = request.data.get('target_field')
         
         if not resume_id:
             return Response({"error": "resume_id is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -22,6 +23,12 @@ class ReadinessScoreView(APIView):
             
             if not parsed_data:
                 return Response({"error": "This resume has no parsed data."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            # NEW: If target field is passed, lock it in the DB
+            if target_field:
+                parsed_data['target_field'] = target_field
+                resume_obj.parsed_data = parsed_data
+                resume_obj.save(update_fields=['parsed_data'])
                 
             readiness_data = calculate_readiness_score(parsed_data)
             

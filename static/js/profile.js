@@ -1,91 +1,315 @@
+const token = localStorage.getItem('access');
+let currentProfileData = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
-    const token = localStorage.getItem('access');
     if (!token) {
         window.location.href = '/login/';
         return;
     }
+    
+    showLoader(true);
 
-    // Load both auth profile and custom user profile
-    await fetchUserProfile();
-    await fetchUserProfileAndHistory();
+    try {
+        await Promise.allSettled([loadProfile(), loadResumes()]);
+    } catch (e) {
+        console.error("Critical Profile Init Error:", e);
+    } finally {
+        showLoader(false);
+    }
+
+    // Attach Listeners
+    attachListener('form-personal', handleSavePersonal);
+    attachListener('form-education', handleSaveEducation);
+    attachListener('form-career', handleSaveCareer);
+    attachListener('form-add-skill', handleAddSkill);
+    attachListener('form-add-experience', handleAddExperience);
+    attachListener('form-add-project', handleAddProject);
 });
 
-async function fetchUserProfile() {
-    const token = localStorage.getItem('access');
+function showLoader(show) {
+    const loader = document.getElementById('profile-loader');
+    const content = document.getElementById('profile-content');
+    if (loader) loader.style.display = show ? 'block' : 'none';
+    if (content) content.style.display = show ? 'none' : 'block';
+}
+
+function attachListener(id, handler) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('submit', handler);
+}
+
+async function loadProfile() {
     try {
         const response = await fetch('/api/auth/profile/', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
         if (response.ok) {
-            const data = await response.json();
-            document.getElementById('profile-email').value = data.email;
-            document.getElementById('profile-email-display').innerText = data.email;
-            document.getElementById('profile-role').innerText = data.role === 'job_seeker' ? 'Job Seeker' : 'HR / Recruiter';
-            document.getElementById('profile-avatar-letter').innerText = data.email.charAt(0).toUpperCase();
+            currentProfileData = await response.json();
+            populateUI(currentProfileData);
         }
-    } catch (error) {
-        console.error("Error fetching user details:", error);
+    } catch (e) {
+        console.error("Profile Fetch Exception:", e);
     }
 }
 
-async function fetchUserProfileAndHistory() {
-    const token = localStorage.getItem('access');
-    const jobsListDiv = document.getElementById('saved-jobs-list');
+async function loadResumes() {
+    const resumeList = document.getElementById('resume-list');
+    if (!resumeList) return;
 
     try {
-        const response = await fetch('/api/profile/jobs/history/', {
+        const response = await fetch('/api/resume/completed/', {
             headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.resumes && data.resumes.length > 0) {
+                resumeList.innerHTML = data.resumes.map(r => `
+                    <div class="resume-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-pdf text-danger fs-5"></i>
+                            <div>
+                                <div class="fw-bold small text-truncate" style="max-width: 120px;">${r.filename || 'Resume.pdf'}</div>
+                                <div class="text-muted" style="font-size: 0.65rem;">ATS Score: ${r.score || '--'}%</div>
+                            </div>
+                        </div>
+                        <a href="${r.file_url}" target="_blank" class="btn btn-sm btn-link text-decoration-none fw-bold small">View</a>
+                    </div>
+                `).join('');
+            } else {
+                resumeList.innerHTML = '<div class="text-center py-3 text-muted small">No resumes found.</div>';
+            }
+        }
+    } catch (e) {
+        console.error("Resume load error:", e);
+    }
+}
+
+function populateUI(data) {
+    if (!data) return;
+    try {
+        const p = data.career_profile || {};
+        
+        safeSetText('hero-name', data.name || 'User');
+        safeSetText('hero-role', p.target_job_role || 'Professional');
+        safeSetText('hero-location', data.address || 'Global');
+        safeSetText('hero-experience', p.experience || 'Entry Level');
+        safeSetText('avatar-initials', (data.name ? data.name[0] : 'U').toUpperCase());
+
+        safeSetText('view-email', data.email);
+        safeSetText('view-phone', data.phone);
+        safeSetText('view-dob', data.date_of_birth);
+        safeSetText('view-address', data.address);
+        
+        safeSetVal('edit-name', data.name || '');
+        safeSetVal('edit-phone', data.phone || '');
+        safeSetVal('edit-dob', data.date_of_birth || '');
+        safeSetVal('edit-address', data.address || '');
+
+        safeSetText('view-edu-display', `${p.education_level || '--'} in ${data.field_of_study || '--'}`);
+        safeSetText('view-university', data.university);
+        safeSetText('view-grad-status', p.student_or_graduate);
+        safeSetText('view-grad-year', p.graduation_year);
+        safeSetText('view-cgpa', p.cgpa || '--');
+
+        safeSetVal('edit-university', data.university || '');
+        safeSetVal('edit-field', data.field_of_study || '');
+        safeSetVal('edit-grad-status', p.student_or_graduate || '');
+        safeSetVal('edit-cgpa', p.cgpa || '');
+
+        safeSetText('view-target-role', p.target_job_role);
+        safeSetText('view-career-display', `${p.experience || '--'} Experience (${p.career_level || '--'})`);
+        setLink('view-linkedin', p.linkedin_url);
+        setLink('view-portfolio', p.portfolio_url);
+
+        safeSetVal('edit-target-role', p.target_job_role || '');
+        safeSetVal('edit-experience', p.experience || '');
+        safeSetVal('edit-career-level', p.career_level || '');
+        safeSetVal('edit-linkedin', p.linkedin_url || '');
+        safeSetVal('edit-portfolio', p.portfolio_url || '');
+
+        renderSkills(p.skills);
+        renderExperience(p.experience_list);
+        renderProjects(p.projects);
+
+    } catch (err) {
+        console.error("UI Population Exception:", err);
+    }
+}
+
+function renderSkills(skills) {
+    const el = document.getElementById('view-skills');
+    if (!el) return;
+    let items = [];
+    if (Array.isArray(skills)) {
+        items = skills.map(s => (typeof s === 'object' ? (s.name || s.skill) : s));
+    } else if (typeof skills === 'string') {
+        items = skills.split(',').map(s=>s.trim());
+    }
+    
+    if (items.length > 0) {
+        el.innerHTML = items.map((s, idx) => `
+            <div class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 me-1 mb-1 small px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                <span>${s}</span>
+                <i class="bi bi-x-circle-fill text-primary text-opacity-50 cursor-pointer" onclick="confirmDeleteSkill(${idx})" style="cursor: pointer;"></i>
+            </div>
+        `).join('');
+    } else {
+        el.innerHTML = '<span class="text-muted small">No skills added yet.</span>';
+    }
+}
+
+function renderExperience(list) {
+    const el = document.getElementById('view-experience-list');
+    if (!el) return;
+    if (list && Array.isArray(list) && list.length > 0) {
+        el.innerHTML = list.map((item, idx) => {
+            let role, company, duration;
+            if (typeof item === 'string') {
+                role = item;
+                company = 'Professional Record';
+                duration = '';
+            } else {
+                role = item.role || item.title || 'Role';
+                company = item.company || item.organization || 'Experience';
+                duration = item.duration || '';
+            }
+            return `
+                <div class="mb-3 border-start ps-3 border-primary border-opacity-25 position-relative group">
+                    <div class="fw-bold small text-primary">${role}</div>
+                    <div class="text-muted" style="font-size: 0.8rem;">${company}</div>
+                    ${duration ? `<div class="text-muted" style="font-size: 0.7rem;">${duration}</div>` : ''}
+                    <button class="btn btn-link text-danger p-0 position-absolute top-0 end-0 small opacity-50" onclick="confirmDeleteExp(${idx})"><i class="bi bi-trash3"></i></button>
+                </div>
+            `;
+        }).join('');
+    } else {
+        el.innerHTML = '<div class="text-muted small">No experience records.</div>';
+    }
+}
+
+function renderProjects(list) {
+    const el = document.getElementById('view-projects-list');
+    if (!el) return;
+    if (list && Array.isArray(list) && list.length > 0) {
+        el.innerHTML = list.map((item, idx) => {
+            let title, desc;
+            if (typeof item === 'string') {
+                title = item;
+                desc = '';
+            } else {
+                title = item.title || item.name || 'Project';
+                desc = item.description || item.summary || '';
+            }
+            return `
+                <div class="mb-3 border-start ps-3 border-success border-opacity-25 position-relative">
+                    <div class="fw-bold small text-success">${title}</div>
+                    ${desc ? `<div class="text-muted" style="font-size: 0.8rem;">${desc}</div>` : ''}
+                    <button class="btn btn-link text-danger p-0 position-absolute top-0 end-0 small opacity-50" onclick="confirmDeleteProj(${idx})"><i class="bi bi-trash3"></i></button>
+                </div>
+            `;
+        }).join('');
+    } else {
+        el.innerHTML = '<div class="text-muted small">No project records found.</div>';
+    }
+}
+
+function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text || '--'; }
+function safeSetVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+function setLink(id, url) { const el = document.getElementById(id); if (!el) return; if (url) { el.href = url; el.style.display = 'inline-block'; } else { el.style.display = 'none'; } }
+
+async function submitProfileUpdate(payload, sectionName) {
+    try {
+        const response = await fetch('/api/auth/career-profile/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            const data = await response.json();
+            if (typeof showToast === 'function') showToast(`${sectionName} updated!`, 'success');
+            await loadProfile();
+            
+            // Auto hide modals
+            const modals = ['Skill', 'Experience', 'Project'];
+            modals.forEach(m => {
+                const el = document.getElementById(`add${m}Modal`);
+                if (el) {
+                    const inst = bootstrap.Modal.getInstance(el);
+                    if (inst) inst.hide();
+                }
+            });
 
-            document.getElementById('jobs-saved-count').innerText = data.saved_jobs ? data.saved_jobs.length : 0;
+            // Reset forms
+            const forms = ['form-add-skill', 'form-add-experience', 'form-add-project'];
+            forms.forEach(f => document.getElementById(f)?.reset());
 
-            // Render jobs history
-            jobsListDiv.innerHTML = '';
-            if (data.saved_jobs && data.saved_jobs.length > 0) {
-                data.saved_jobs.forEach(job => {
-                    jobsListDiv.innerHTML += `
-                        <div class="card border border-success shadow-sm bg-body border-opacity-50 hover-elevate">
-                            <div class="card-header bg-success bg-opacity-10 border-bottom border-success d-flex justify-content-between align-items-center py-2">
-                                <h6 class="fw-bold text-body-emphasis mb-0 fs-6 text-truncate" style="max-width:70%;">${job.job_title} <span class="text-muted fw-normal ms-1 fs-6">at ${job.company}</span></h6>
-                                <div class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm">${job.ats_score}% Match</div>
-                            </div>
-                            <div class="card-body py-2 px-3 pb-3">
-                                <div class="mt-2 text-muted small lh-sm line-clamp-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><i class="bi bi-geo-alt text-primary me-1"></i>${job.location || 'Remote'} - ${job.description}</div>
-                                <div class="mt-3 py-2 border-top border-opacity-50 small text-body">
-                                    <strong><i class="bi bi-robot text-info me-1"></i> AI Feedback:</strong> 
-                                    ${job.matching_reason}
-                                </div>
-                                ${job.improvement_suggestion ? `
-                                    <div class="mt-2 fst-italic text-warning small">
-                                        <i class="bi bi-lightbulb-fill"></i> ${job.improvement_suggestion}
-                                    </div>
-                                ` : ''}
-                                <div class="mt-3 text-end">
-                                    <a href="${job.job_url}" target="_blank" class="btn btn-sm btn-outline-success fw-bold px-4 rounded-pill">Apply Again <i class="bi bi-box-arrow-up-right ms-1"></i></a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                jobsListDiv.innerHTML = `
-                    <div class="alert alert-secondary bg-body-tertiary border-0 text-center py-4">
-                        <i class="bi bi-inbox fs-2 text-muted mb-2 d-block"></i>
-                        <h6 class="fw-bold text-body-emphasis">No jobs saved yet</h6>
-                        <p class="small text-muted mb-0">Your ATS auto-saves will appear here.</p>
-                    </div>
-                `;
-            }
+            // Exit edit modes
+            document.querySelectorAll('.is-editing').forEach(el => el.classList.remove('is-editing'));
 
         } else {
-            jobsListDiv.innerHTML = '<div class="alert alert-danger mx-auto">Failed to load history.</div>';
+            if (typeof showToast === 'function') showToast('Update failed.', 'error');
         }
-    } catch (error) {
-        console.error("Error fetching history:", error);
-        jobsListDiv.innerHTML = '<div class="alert alert-danger mx-auto">Network error. Please try again.</div>';
+    } catch (e) { console.error("Update error:", e); }
+}
+
+function handleSavePersonal(e) { e.preventDefault(); submitProfileUpdate({ name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, date_of_birth: document.getElementById('edit-dob').value, address: document.getElementById('edit-address').value }, 'Personal'); }
+function handleSaveEducation(e) { e.preventDefault(); submitProfileUpdate({ university: document.getElementById('edit-university').value, field_of_study: document.getElementById('edit-field').value, student_or_graduate: document.getElementById('edit-grad-status').value, cgpa: document.getElementById('edit-cgpa').value }, 'Education'); }
+function handleSaveCareer(e) { e.preventDefault(); submitProfileUpdate({ target_job_role: document.getElementById('edit-target-role').value, experience: document.getElementById('edit-experience').value, career_level: document.getElementById('edit-career-level').value, linkedin_url: document.getElementById('edit-linkedin').value, portfolio_url: document.getElementById('edit-portfolio').value }, 'Career'); }
+
+function handleAddSkill(e) {
+    e.preventDefault();
+    const newSkills = document.getElementById('new-skill-name').value.split(',').map(s => s.trim()).filter(s => s !== '');
+    const existing = (currentProfileData.career_profile || {}).skills || [];
+    const updated = [...existing, ...newSkills];
+    submitProfileUpdate({ skills: updated }, 'Skill');
+}
+
+function handleAddExperience(e) {
+    e.preventDefault();
+    const list = (currentProfileData.career_profile || {}).experience_list || [];
+    list.push({ role: document.getElementById('new-exp-role').value, company: document.getElementById('new-exp-company').value, duration: document.getElementById('new-exp-duration').value });
+    submitProfileUpdate({ experience_list: list }, 'Experience');
+}
+
+function handleAddProject(e) {
+    e.preventDefault();
+    const list = (currentProfileData.career_profile || {}).projects || [];
+    list.push({ title: document.getElementById('new-proj-title').value, description: document.getElementById('new-proj-desc').value });
+    submitProfileUpdate({ projects: list }, 'Project');
+}
+
+// Delete Logic with custom messages
+window.confirmDeleteSkill = (idx) => {
+    if (confirm("Do you want to delete this skill from your profile?")) {
+        const skills = (currentProfileData.career_profile || {}).skills || [];
+        skills.splice(idx, 1);
+        submitProfileUpdate({ skills: skills }, 'Skill');
     }
+};
+
+window.confirmDeleteExp = (idx) => {
+    if (confirm("Remove this experience record?")) {
+        const list = (currentProfileData.career_profile || {}).experience_list || [];
+        list.splice(idx, 1);
+        submitProfileUpdate({ experience_list: list }, 'Experience');
+    }
+};
+
+window.confirmDeleteProj = (idx) => {
+    if (confirm("Delete this project from your profile?")) {
+        const list = (currentProfileData.career_profile || {}).projects || [];
+        list.splice(idx, 1);
+        submitProfileUpdate({ projects: list }, 'Project');
+    }
+};
+
+function toggleEdit(section) {
+    const el = document.getElementById(`section-${section}`);
+    if (el) el.classList.add('is-editing');
+}
+
+function cancelEdit(section) {
+    const el = document.getElementById(`section-${section}`);
+    if (el) el.classList.remove('is-editing');
+    if (currentProfileData) populateUI(currentProfileData);
 }

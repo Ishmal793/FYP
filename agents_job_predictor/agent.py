@@ -4,9 +4,10 @@ from typing import List
 from langchain_groq import ChatGroq
 
 class JobPrediction(BaseModel):
-    title: str = Field(description="Market relevant job title (e.g., 'Senior Frontend Developer')")
-    confidence: int = Field(description="Confidence score from 0 to 100 based on the candidate's skills and experience match")
-    match_reason: str = Field(description="Short reason why this job is a strong fit based on their specific skills.")
+    job_title: str = Field(description="Predicted Job Title")
+    level: str = Field(description="Entry / Junior / Mid / Senior")
+    confidence: str = Field(description="0-100%")
+    reason: str = Field(description="Clear explanation referencing skills, experience, and preferred field")
 
 class JobTitleList(BaseModel):
     jobs: List[JobPrediction] = Field(
@@ -20,17 +21,17 @@ def get_job_predictor_llm():
     if not api_key:
         raise ValueError("GROQ_API_KEY is missing from environment variables.")
     
-    # We use llama-3.3-70b-versatile for high reasoning quality here
+    # We use llama-3.1-8b-instant for fast execution
     llm = ChatGroq(
         api_key=api_key,
-        model_name="llama-3.3-70b-versatile",
+        model_name="llama-3.1-8b-instant",
         temperature=0.3
     )
     return llm.with_structured_output(JobTitleList)
 
-def predict_job_titles(parsed_resume_data: dict) -> list:
+def predict_job_titles(parsed_resume_data: dict, preferred_field: str = "") -> list:
     """
-    Predicts the top 5 job titles based on parsed skills and experience.
+    Predicts the top 5 job titles based on parsed skills, experience, and preferred career field.
     """
     # Extract just skills and experience to feed context
     skills = parsed_resume_data.get("skills", [])
@@ -40,40 +41,43 @@ def predict_job_titles(parsed_resume_data: dict) -> list:
     context = {
         "skills": skills,
         "tools": tools,
-        "experience": experience
+        "experience": experience,
+        "preferred_field": preferred_field
     }
 
     structured_llm = get_job_predictor_llm()
     
     prompt = f"""
-    You are an expert HR Recruiter and Technical Headhunter.
-    Based on the following candidate's specific Skills, Tools, and Work Experience, predict the top 5 most highly relevant, market-standard Job Titles they should apply for.
-    
+    Your task is to predict the MOST suitable job title for a candidate.
+
+    STRICT RULES:
+    1. The predicted job title MUST belong ONLY to the user's selected "Preferred Career Field": {preferred_field}. Do NOT go outside this field under any condition. If resume suggests another field, IGNORE it.
+    2. Use the following inputs for decision making: Skills (primary signal), Work Experience (highest weight), Projects (second highest weight), Education (supporting signal).
+    3. The job title must match the candidate's strongest skills, reflect their experience level (Entry/Junior/Mid/Senior), and be realistic.
+    4. If user has no experience -> Entry-Level. Internship/Projects -> Junior role. Strong experience -> Mid/Senior.
+    5. Do NOT generate random or generic titles. Be specific (e.g. "Frontend React Developer").
+    6. Choose the BEST MATCH based on strongest evidence.
+    7. Output EXACTLY 5 job titles.
+
     Candidate Context:
     {context}
     
-    Rules:
-    1. Output EXACTLY 5 job titles.
-    2. Ensure they are MODERN and MARKET-RELEVANT (e.g., "Full Stack Engineer" instead of "Computer Programmer").
-    3. Calculate a highly realistic `confidence` score (0-100) reflecting how well their background matches that specific title.
-    4. Provide a brief `match_reason` explaining why their skills/experience align perfectly with this role.
-    5. DO NOT hallucinate. Keep recommendations strictly constrained to what their data supports.
-    
-    Output strictly matching the requested JSON array schema.
+    Output format STRICT JSON array of exactly 5 objects matching the schema.
     """
     
     print("[DEBUG - JOB_PREDICTOR] Sending prompt to Groq LLM...")
     try:
         result = structured_llm.invoke(prompt)
         print(f"[DEBUG - JOB_PREDICTOR] Predicted {len(result.jobs)} jobs successfully")
+        # Ensure we map it back to UI expectations if we changed field names, or map UI
+        # UI expects: title, confidence, match_reason or we update UI.
         return [job.dict() for job in result.jobs]
     except Exception as e:
         print(f"[DEBUG - JOB_PREDICTOR] Exception during job prediction: {str(e)}")
-        # Generic Fallback
         return [
-            {"title": "Software Engineer", "confidence": 80, "match_reason": "General match based on text presence."},
-            {"title": "Data Analyst", "confidence": 70, "match_reason": "Fallback generic match."},
-            {"title": "Project Manager", "confidence": 60, "match_reason": "Fallback generic match."},
-            {"title": "Systems Administrator", "confidence": 50, "match_reason": "Fallback generic match."},
-            {"title": "Product Designer", "confidence": 40, "match_reason": "Fallback generic match."},
+            {"job_title": "Software Engineer", "level": "Mid", "confidence": "80%", "reason": "General match based on text presence."},
+            {"job_title": "Data Analyst", "level": "Mid", "confidence": "70%", "reason": "Fallback generic match."},
+            {"job_title": "Project Manager", "level": "Mid", "confidence": "60%", "reason": "Fallback generic match."},
+            {"job_title": "Systems Administrator", "level": "Mid", "confidence": "50%", "reason": "Fallback generic match."},
+            {"job_title": "Product Designer", "level": "Mid", "confidence": "40%", "reason": "Fallback generic match."},
         ]

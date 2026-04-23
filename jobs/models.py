@@ -11,16 +11,12 @@ class JobResult(models.Model):
     description = models.TextField()
     job_url = models.URLField(max_length=500, null=True, blank=True)
     
-    # Matching Scores
-    ats_score = models.IntegerField(default=0)
-    skills_score = models.IntegerField(default=0)
-    experience_score = models.IntegerField(default=0)
-    education_score = models.IntegerField(default=0)
-    
-    # Feedback
-    matching_reason = models.TextField(null=True, blank=True)
-    improvement_suggestion = models.TextField(null=True, blank=True)
+    overall_score = models.IntegerField(default=0)
+    score_breakdown = models.JSONField(default=dict, blank=True)
+    details = models.JSONField(default=dict, blank=True)
     missing_keywords = models.JSONField(default=list, blank=True)
+    searchability = models.JSONField(default=dict, blank=True)
+    recruiter_tips = models.JSONField(default=list, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -28,4 +24,4 @@ class JobResult(models.Model):
         ordering = ['-created_at']
         
     def __str__(self):
-        return f"{self.user.email} - {self.job_title} ({self.ats_score}/100)"
+        return f"{self.user.email} - {self.job_title} ({self.overall_score}/100)"

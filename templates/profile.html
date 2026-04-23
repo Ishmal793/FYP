@@ -2,93 +2,374 @@
 {% load static %}
 {% block title %}My Profile - ElevateCareer{% endblock %}
 
+{% block extra_css %}
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .profile-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 2rem;
+        padding: 3rem;
+        color: white;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .avatar-pro {
+        width: 110px; height: 110px;
+        background: rgba(255,255,255,0.05);
+        border: 2px solid rgba(255,255,255,0.1);
+        border-radius: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 800;
+        backdrop-filter: blur(10px);
+        color: #3b82f6;
+    }
+
+    .profile-card-pro {
+        background: var(--bs-body-bg);
+        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.08);
+        border-radius: 2rem;
+        padding: 2rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .field-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #94a3b8;
+        font-weight: 800;
+        margin-bottom: 0.4rem;
+    }
+    .field-value {
+        font-weight: 600;
+        color: var(--bs-emphasis-color);
+        font-size: 0.95rem;
+    }
+
+    .edit-mode { display: none; }
+    .is-editing .view-mode { display: none; }
+    .is-editing .edit-mode { display: block; }
+
+    .resume-item, .detail-item {
+        background: rgba(var(--bs-emphasis-color-rgb), 0.03);
+        border-radius: 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.05);
+        margin-bottom: 1rem;
+    }
+
+    .glass-input-pro {
+        background: rgba(var(--bs-emphasis-color-rgb), 0.03) !important;
+        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.1) !important;
+        border-radius: 1rem !important;
+        padding: 0.8rem 1.2rem !important;
+        color: var(--bs-emphasis-color) !important;
+    }
+
+    .section-title-pro {
+        font-family: 'Outfit';
+        font-weight: 800;
+        font-size: 1.4rem;
+        color: var(--bs-emphasis-color);
+    }
+
+    /* Modal Styling */
+    .modal-content-pro {
+        background: var(--bs-body-bg);
+        border-radius: 2rem;
+        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.1);
+        backdrop-filter: blur(20px);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-4 align-items-center">
-    <div class="col-md-8">
-        <h1 class="fw-bold fs-3 mb-1">My Profile</h1>
-        <p class="text-muted-custom mb-0">Manage your skills, experience, and view saved job matches.</p>
-    </div>
+<div id="profile-loader" class="text-center py-5">
+    <div class="spinner-grow text-primary" role="status"></div>
 </div>
 
-<div class="row g-4">
-    <!-- Left Column: Edit Profile Details -->
-    <div class="col-md-5">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-header bg-primary bg-opacity-10 border-0 p-4 pb-2">
-                <h5 class="fw-bold text-primary mb-0"><i class="bi bi-person-lines-fill me-2"></i>Account Details</h5>
+<div id="profile-content" style="display: none;">
+    <!-- Hero Card -->
+    <div class="profile-hero" data-aos="zoom-in">
+        <div class="row align-items-center">
+            <div class="col-md-auto text-center">
+                <div class="avatar-pro mx-auto" id="avatar-initials">U</div>
             </div>
-            <div class="card-body p-4" id="profile-edit-target">
-                <!-- Mini Header -->
-                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 me-3 shadow-sm"
-                        style="width: 60px; height: 60px;" id="profile-avatar-letter">
-                        U
-                    </div>
-                    <div>
-                        <h5 class="fw-bold mb-0" id="profile-email-display">Loading...</h5>
-                        <p class="text-muted small mb-0"><span id="profile-role">User</span></p>
+            <div class="col-md ps-md-4 mt-3 mt-md-0 text-center text-md-start">
+                <h1 class="display-6 fw-bold mb-1" id="hero-name" style="font-family: 'Outfit';">User Name</h1>
+                <p class="lead opacity-75 mb-3 small fw-medium" id="hero-role">Professional Role</p>
+                <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-2">
+                    <span class="badge bg-white bg-opacity-10 rounded-pill px-3 py-2 border border-white border-opacity-10" id="hero-location">--</span>
+                    <span class="badge bg-white bg-opacity-10 rounded-pill px-3 py-2 border border-white border-opacity-10" id="hero-experience">--</span>
+                </div>
+            </div>
+            <div class="col-md-auto mt-4 mt-md-0 text-center">
+                <a href="/home/" class="btn btn-outline-light rounded-pill px-4 fw-bold border-opacity-25">Return Home</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Info -->
+        <div class="col-lg-12">
+            <!-- Summary Grid -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4" data-aos="fade-up">
+                    <div class="profile-card-pro" id="section-personal">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title-pro mb-0">Personal Info</h5>
+                            <button class="btn btn-sm btn-link text-decoration-none fw-bold btn-edit" onclick="toggleEdit('personal')">Edit</button>
+                            <button class="btn btn-sm btn-link text-decoration-none fw-bold btn-cancel edit-mode" onclick="cancelEdit('personal')">Cancel</button>
+                        </div>
+                        <div class="view-mode">
+                            <div class="mb-3"><div class="field-label">Email</div><div class="field-value" id="view-email">--</div></div>
+                            <div class="mb-3"><div class="field-label">Phone</div><div class="field-value" id="view-phone">--</div></div>
+                            <div class="mb-3"><div class="field-label">Birth Date</div><div class="field-value" id="view-dob">--</div></div>
+                            <div class="mb-0"><div class="field-label">Address</div><div class="field-value" id="view-address">--</div></div>
+                        </div>
+                        <div class="edit-mode">
+                            <form id="form-personal">
+                                <label class="small fw-bold text-muted mb-1">Full Name</label>
+                                <input type="text" class="form-control glass-input-pro mb-2" id="edit-name" required>
+                                <label class="small fw-bold text-muted mb-1">Phone</label>
+                                <input type="text" class="form-control glass-input-pro mb-2" id="edit-phone" required>
+                                <label class="small fw-bold text-muted mb-1">Birth Date</label>
+                                <input type="date" class="form-control glass-input-pro mb-2" id="edit-dob" required>
+                                <label class="small fw-bold text-muted mb-1">Address</label>
+                                <input type="text" class="form-control glass-input-pro mb-3" id="edit-address" required>
+                                <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold py-2">Save Changes</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Stub Profile Form for Expansion in next iteration if user wants -->
-                <form id="editProfileForm">
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="profile-card-pro" id="section-education">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title-pro mb-0">Academic</h5>
+                            <button class="btn btn-sm btn-link text-decoration-none fw-bold btn-edit" onclick="toggleEdit('education')">Edit</button>
+                            <button class="btn btn-sm btn-link text-decoration-none fw-bold btn-cancel edit-mode" onclick="cancelEdit('education')">Cancel</button>
+                        </div>
+                        <div class="view-mode">
+                            <div class="mb-3"><div class="field-label">Degree & Institution</div><div class="field-value" id="view-edu-display">--</div></div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><div class="field-label">Status</div><div class="field-value small" id="view-grad-status">--</div></div>
+                                <div class="col-6"><div class="field-label">Grad Year</div><div class="field-value small" id="view-grad-year">--</div></div>
+                            </div>
+                            <div class="mb-0"><div class="field-label">CGPA / Percentage</div><div class="field-value small" id="view-cgpa">--</div></div>
+                        </div>
+                        <div class="edit-mode">
+                            <form id="form-education">
+                                <label class="small fw-bold text-muted mb-1">Institution</label>
+                                <input type="text" class="form-control glass-input-pro mb-2" id="edit-university" required>
+                                <label class="small fw-bold text-muted mb-1">Field of Study</label>
+                                <input type="text" class="form-control glass-input-pro mb-2" id="edit-field" required>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="small fw-bold text-muted mb-1">Status</label>
+                                        <select class="form-select glass-input-pro" id="edit-grad-status">
+                                            <option value="Graduate">Graduate</option>
+                                            <option value="Currently Studying">Currently Studying</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small fw-bold text-muted mb-1">CGPA</label>
+                                        <input type="text" class="form-control glass-input-pro" id="edit-cgpa">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold py-2">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="profile-card-pro" id="section-career">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title-pro mb-0">Career</h5>
+                            <button class="btn btn-sm btn-link text-decoration-none fw-bold btn-edit" onclick="toggleEdit('career')">Edit</button>
+                            <button class="btn btn-sm btn-link text-decoration-none fw-bold btn-cancel edit-mode" onclick="cancelEdit('career')">Cancel</button>
+                        </div>
+                        <div class="view-mode">
+                            <div class="mb-3"><div class="field-label">Target Role</div><div class="field-value" id="view-target-role">--</div></div>
+                            <div class="mb-3"><div class="field-label">Experience & Level</div><div class="field-value small" id="view-career-display">--</div></div>
+                            <div class="d-flex gap-3 mt-3">
+                                <a href="#" id="view-linkedin" target="_blank" class="text-primary fs-5"><i class="bi bi-linkedin"></i></a>
+                                <a href="#" id="view-portfolio" target="_blank" class="text-success fs-5"><i class="bi bi-globe"></i></a>
+                            </div>
+                        </div>
+                        <div class="edit-mode">
+                            <form id="form-career">
+                                <label class="small fw-bold text-muted mb-1">Target Role</label>
+                                <input type="text" class="form-control glass-input-pro mb-2" id="edit-target-role" required>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="small fw-bold text-muted mb-1">Experience</label>
+                                        <select class="form-select glass-input-pro" id="edit-experience">
+                                            <option value="0 years">0 years</option>
+                                            <option value="1-2 years">1-2 years</option>
+                                            <option value="3-5 years">3-5 years</option>
+                                            <option value="5-8 years">5-8 years</option>
+                                            <option value="8+ years">8+ years</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small fw-bold text-muted mb-1">Level</label>
+                                        <select class="form-select glass-input-pro" id="edit-career-level">
+                                            <option value="Entry Level">Entry Level</option>
+                                            <option value="Junior">Junior</option>
+                                            <option value="Mid-Level">Mid-Level</option>
+                                            <option value="Senior">Senior</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <input type="url" class="form-control glass-input-pro mb-2" id="edit-linkedin" placeholder="LinkedIn URL">
+                                <input type="url" class="form-control glass-input-pro mb-3" id="edit-portfolio" placeholder="Portfolio URL">
+                                <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold py-2">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Sections -->
+            <div class="row g-4">
+                <!-- Skills -->
+                <div class="col-md-6" data-aos="fade-up">
+                    <div class="profile-card-pro" id="section-skills">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title-pro mb-0"><i class="bi bi-tools text-primary me-2"></i>Technical Skills</h5>
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addSkillModal">Add Skill</button>
+                        </div>
+                        <div id="view-skills" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Resumes -->
+                <div class="col-md-6" data-aos="fade-up">
+                    <div class="profile-card-pro">
+                        <h5 class="section-title-pro mb-4"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Analyzed Resumes</h5>
+                        <div id="resume-list"></div>
+                    </div>
+                </div>
+
+                <!-- Experience -->
+                <div class="col-lg-6" data-aos="fade-up">
+                    <div class="profile-card-pro">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title-pro mb-0"><i class="bi bi-briefcase text-info me-2"></i>Experience</h5>
+                            <button class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addExperienceModal">Add Experience</button>
+                        </div>
+                        <div id="view-experience-list"></div>
+                    </div>
+                </div>
+
+                <!-- Projects -->
+                <div class="col-lg-6" data-aos="fade-up">
+                    <div class="profile-card-pro">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title-pro mb-0"><i class="bi bi-code-slash text-success me-2"></i>Projects</h5>
+                            <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addProjectModal">Add Project</button>
+                        </div>
+                        <div id="view-projects-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS FOR ADDING DATA -->
+<div class="modal fade" id="addSkillModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-pro">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h5 class="fw-bold mb-0">Add New Skill</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="form-add-skill">
                     <div class="mb-3">
-                        <label for="profile-email" class="form-label fw-medium small text-muted">Email Address
-                            (Readonly)</label>
-                        <input type="email" class="form-control bg-body-tertiary" id="profile-email" readonly disabled>
+                        <label class="small fw-bold text-muted mb-1">Skill Name</label>
+                        <input type="text" class="form-control glass-input-pro" id="new-skill-name" required placeholder="e.g. Django, Flutter, Machine Learning">
                     </div>
-
-                    <div class="alert alert-info border-info-subtle bg-info bg-opacity-10 d-flex mt-4">
-                        <i class="bi bi-magic fs-4 me-3 text-info"></i>
-                        <p class="mb-0 small text-body-emphasis">We automatically extract your <strong>Skills</strong>,
-                            <strong>Tools</strong>, <strong>Experience</strong>, and <strong>Education</strong> from
-                            your Resumes on the dashboard. In the future you will be able to manually edit those
-                            extracted fields here.</p>
-                    </div>
-
-                    <!-- Example of what could go here manually -->
-                    <!--
-                    <div class="mb-3 mt-4">
-                        <label class="form-label fw-medium small text-muted">Manual Skills (Comma Separated)</label>
-                        <textarea class="form-control" rows="3" placeholder="e.g. Python, Django, React..."></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 fw-bold mt-2">Save Profile Updates</button>
-                    -->
+                    <p class="text-muted" style="font-size: 0.75rem;">Tip: You can add multiple skills separated by commas.</p>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 mt-2">Add to Profile</button>
                 </form>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Right Column: ATS Saved History -->
-    <div class="col-md-7">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div
-                class="card-header bg-success bg-opacity-10 border-0 p-4 pb-2 d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="fw-bold text-success mb-0"><i class="bi bi-bookmark-star-fill me-2"></i>Saved Job Matches
-                    </h5>
-                    <p class="text-muted small mb-0 mt-1">Jobs that exceeded 70% ATS score on your past runs are
-                        auto-saved here.</p>
-                </div>
-                <div class="text-center bg-body rounded bg-opacity-75 px-3 py-1 shadow-sm border">
-                    <div class="fs-4 fw-bold text-success" id="jobs-saved-count">0</div>
-                    <div class="small fw-medium text-muted"
-                        style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Saved</div>
-                </div>
-            </div>
-            <div class="card-body p-4">
-                <div id="saved-jobs-list" class="d-flex flex-column gap-3">
-                    <div class="text-center py-4 text-muted">
-                        <div class="spinner-border spinner-border-sm text-success me-2"></div>Loading history...
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="addExperienceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-pro">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h5 class="fw-bold mb-0">Add Work Experience</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="form-add-experience">
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted mb-1">Job Role</label>
+                        <input type="text" class="form-control glass-input-pro" id="new-exp-role" required placeholder="e.g. Senior Developer">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted mb-1">Company</label>
+                        <input type="text" class="form-control glass-input-pro" id="new-exp-company" required placeholder="e.g. Google">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted mb-1">Duration</label>
+                        <input type="text" class="form-control glass-input-pro" id="new-exp-duration" required placeholder="e.g. 2021 - Present">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 mt-2">Save Experience</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-pro">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h5 class="fw-bold mb-0">Add Featured Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="form-add-project">
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted mb-1">Project Title</label>
+                        <input type="text" class="form-control glass-input-pro" id="new-proj-title" required placeholder="e.g. AI Portfolio">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted mb-1">Description</label>
+                        <textarea class="form-control glass-input-pro" id="new-proj-desc" rows="3" placeholder="Brief summary of what you built..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success text-white w-100 rounded-pill fw-bold py-2 mt-2">Save Project</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/profile.js' %}"></script>
+<!-- AOS Animation JS -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="{% static 'js/profile.js' %}?v={% now 'U' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof AOS !== 'undefined') AOS.init({ duration: 800, once: true });
+    });
+</script>
 {% endblock %}

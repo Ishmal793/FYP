@@ -53,6 +53,14 @@ INSTALLED_APPS = [
     "agents_jd_validator",
     "agents_ats_matcher",
     "jobs",
+    "agents_job_matcher",
+    "agents_jd_generator",
+    "agents_skill_gap",
+    "agents_career_path",
+    "hr_module",
+    "agents_career_coach",
+    "vector_engine",
+    "fast_nlp_layer",
 ]
 
 MIDDLEWARE = [
@@ -146,6 +154,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

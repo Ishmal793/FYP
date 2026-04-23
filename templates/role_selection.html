@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Join - ElevateCareer{% endblock %}
+
+{% block extra_css %}
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .role-selection-section {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .role-card-premium {
+        background: var(--glass-bg);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--glass-border);
+        border-radius: 2.5rem;
+        padding: 4rem 3rem;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-decoration: none !important;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .role-card-premium::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        pointer-events: none;
+    }
+
+    .role-card-premium:hover {
+        transform: translateY(-15px) scale(1.02);
+        box-shadow: 0 40px 80px -20px rgba(0,0,0,0.15);
+        border-color: #2563eb;
+    }
+
+    .role-card-premium.hr:hover {
+        border-color: #10b981;
+    }
+
+    .icon-box-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin-bottom: 2.5rem;
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.4);
+        transition: all 0.4s ease;
+    }
+
+    .role-card-premium:hover .icon-box-large {
+        transform: scale(1.1) rotate(-5deg);
+    }
+
+    .role-tag {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1.5rem;
+        background: rgba(37, 99, 235, 0.1);
+        color: #2563eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Animated Background -->
+<div class="mesh-gradient">
+    <div class="mesh-ball-1"></div>
+    <div class="mesh-ball-2"></div>
+</div>
+
+<section class="role-selection-section">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-down">
+            <h1 class="display-4 fw-bold mb-3" style="font-family: 'Outfit';">How will you use <span class="text-primary">ElevateCareer?</span></h1>
+            <p class="text-muted fs-5">Select your primary role to customize your AI experience.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center mt-5">
+            <!-- Job Seeker -->
+            <div class="col-md-6 col-lg-5" data-aos="fade-right" data-aos-delay="100">
+                <a href="/signup/?role=job_seeker" class="role-card-premium">
+                    <div class="role-tag">Candidates</div>
+                    <div class="icon-box-large"><i class="bi bi-person-bounding-box"></i></div>
+                    <h2 class="fw-bold mb-3 text-body">Job Seeker</h2>
+                    <p class="text-muted-custom fs-6 mb-5">
+                        Build an AI-optimized profile, analyze your resume's ATS performance, and discover jobs that perfectly match your skills.
+                    </p>
+                    <div class="mt-auto">
+                        <div class="btn btn-primary btn-lg w-100 py-3 rounded-4 shadow-lg">Start My Journey</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- HR / Recruiter -->
+            <div class="col-md-6 col-lg-5" data-aos="fade-left" data-aos-delay="200">
+                <a href="/signup/?role=hr" class="role-card-premium hr">
+                    <div class="role-tag" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Employers</div>
+                    <div class="icon-box-large" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.4);"><i class="bi bi-building-up"></i></div>
+                    <h2 class="fw-bold mb-3 text-body">HR / Recruiter</h2>
+                    <p class="text-muted-custom fs-6 mb-5">
+                        Leverage semantic search to find top talent, rank candidates automatically, and manage your recruitment pipeline with AI.
+                    </p>
+                    <div class="mt-auto">
+                        <div class="btn btn-success btn-lg w-100 py-3 rounded-4 shadow-lg text-white">Hire Top Talent</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="text-center mt-5" data-aos="fade-up" data-aos-delay="400">
+            <p class="text-muted">Already have an account? <a href="/login/" class="text-primary fw-bold text-decoration-none">Sign In</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({ duration: 1000, once: true });
+</script>
+{% endblock %}

@@ -1,75 +1,244 @@
 {% extends "base.html" %}
 {% block title %}Log in - ElevateCareer{% endblock %}
 
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f8fafc;
+        overflow-x: hidden;
+    }
+    
+    .auth-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+    }
+
+    .auth-side-panel {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        flex: 1.2;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        padding: 6rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    @media (min-width: 992px) {
+        .auth-side-panel { display: flex; }
+    }
+
+    .auth-form-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background: white;
+    }
+
+    .login-card-pro {
+        width: 100%;
+        max-width: 440px;
+        animation: fadeInLeft 0.8s ease;
+    }
+
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .glass-input-pro {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 1rem !important;
+        padding: 0.9rem 1.4rem !important;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .glass-input-pro:focus {
+        background: white !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+    }
+
+    .btn-auth-pro {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
+    }
+    .btn-auth-pro:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.4);
+        opacity: 0.95;
+    }
+
+    .feature-point {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .feature-point-icon {
+        width: 52px; height: 52px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1.5rem;
+        font-size: 1.4rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card auth-card mt-4">
-            <div class="card-body p-4 p-sm-5">
-                <div class="text-center mb-4">
-                    <h2 class="fw-bold mb-1">Welcome back</h2>
-                    <p class="text-muted-custom">Log in to your account</p>
+</div> <!-- Close default container -->
+
+<div class="auth-wrapper">
+    <!-- Left Side: Branding & Features -->
+    <div class="auth-side-panel">
+        <div class="mb-5">
+            <a class="navbar-brand text-white fs-3 fw-bold" href="/">
+                <i class="bi bi-rocket-takeoff-fill me-2"></i> ElevateCareer
+            </a>
+        </div>
+        
+        <h1 class="display-4 fw-bold mb-5" style="font-family: 'Outfit';">Elevate Your <br>Professional Path.</h1>
+
+        <div class="feature-point">
+            <div class="feature-point-icon"><i class="bi bi-robot"></i></div>
+            <div>
+                <h6 class="mb-0 fw-bold text-white">AI Career Agent</h6>
+                <p class="small text-white-50 mb-0">Your personalized 24/7 career strategist.</p>
+            </div>
+        </div>
+
+        <div class="feature-point">
+            <div class="feature-point-icon"><i class="bi bi-lightning-charge"></i></div>
+            <div>
+                <h6 class="mb-0 fw-bold text-white">Smart Match Engine</h6>
+                <p class="small text-white-50 mb-0">Direct pipelines to high-growth opportunities.</p>
+            </div>
+        </div>
+
+        <div class="feature-point">
+            <div class="feature-point-icon"><i class="bi bi-pie-chart"></i></div>
+            <div>
+                <h6 class="mb-0 fw-bold text-white">ATS Intelligence</h6>
+                <p class="small text-white-50 mb-0">Optimize for the algorithms that matter.</p>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-5 border-top border-white border-opacity-10">
+            <p class="small text-white-50 mb-0">&copy; 2026 ElevateCareer AI. All Rights Reserved.</p>
+        </div>
+    </div>
+
+    <!-- Right Side: Login Form -->
+    <div class="auth-form-panel">
+        <div class="login-card-pro">
+            <div class="mb-5 text-center text-lg-start">
+                <h2 class="fw-bold mb-2" style="font-family: 'Outfit';">Welcome Back</h2>
+                <p class="text-muted">Sign in to continue your journey.</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase mb-2 text-muted" style="letter-spacing: 1px;">Email Address</label>
+                    <input type="email" class="form-control glass-input-pro" id="email" required placeholder="name@example.com">
                 </div>
-                <div id="alert-container"></div>
-                <form id="login-form">
-                    <div class="mb-3">
-                        <label class="form-label fw-medium small">Email address</label>
-                        <input type="email" class="form-control" id="email" required placeholder="name@example.com">
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold small text-uppercase mb-0 text-muted" style="letter-spacing: 1px;">Password</label>
+                        <a href="#" class="text-primary small fw-bold text-decoration-none">Reset Password?</a>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-medium small">Password</label>
-                        <input type="password" class="form-control" id="password" required placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100" id="submit-btn" style="padding: 12px;">Log
-                        in</button>
-                </form>
-                <div class="text-center mt-4 text-muted-custom small">
-                    Don't have an account? <a href="/signup/" class="text-decoration-none fw-medium text-primary">Sign
-                        up</a>
+                    <input type="password" class="form-control glass-input-pro" id="password" required placeholder="••••••••">
                 </div>
+
+                <div class="form-check mb-5">
+                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                    <label class="form-check-label small text-muted" for="rememberMe">Stay logged in for 30 days</label>
+                </div>
+
+                <button type="submit" class="btn btn-auth-pro w-100 py-3" id="submit-btn">
+                    Access My Dashboard
+                </button>
+            </form>
+
+            <div class="text-center mt-5">
+                <p class="text-muted small">Don't have an account? <a href="/join/" class="text-primary fw-bold text-decoration-none ms-1">Sign Up Now</a></p>
             </div>
         </div>
     </div>
 </div>
+
+<div class="container d-none">
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const btn = document.getElementById('submit-btn');
-        const alertContainer = document.getElementById('alert-container');
+    document.addEventListener('DOMContentLoaded', () => {
+        AOS.init();
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('submit-btn');
+            const alertContainer = document.getElementById('alert-container');
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Logging in...';
-        alertContainer.innerHTML = '';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Authenticating...';
+            alertContainer.innerHTML = '';
 
-        try {
-            const response = await fetch('/api/auth/login/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('access', data.access);
-                localStorage.setItem('refresh', data.refresh);
-                window.location.href = '/dashboard/';
-            } else {
-                let errorMsg = 'Invalid email or password.';
-                if (data.detail) errorMsg = data.detail;
-                alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">${errorMsg}</div>`;
+            try {
+                const response = await fetch('/api/auth/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('access', data.access);
+                    localStorage.setItem('refresh', data.refresh);
+                    
+                    const profileRes = await fetch('/api/auth/profile/', {
+                        headers: { 'Authorization': `Bearer ${data.access}` }
+                    });
+                    
+                    if (profileRes.ok) {
+                        const profileData = await profileRes.json();
+                        if (profileData.role === 'job_seeker' && !profileData.has_career_profile) {
+                            window.location.href = '/questionnaire/';
+                        } else {
+                            window.location.href = '/home/';
+                        }
+                    } else {
+                        window.location.href = '/home/';
+                    }
+                } else {
+                    alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3 border-0 shadow-sm"><i class="bi bi-x-circle-fill me-2"></i>Invalid credentials. Please try again.</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = 'Access My Dashboard';
+                }
+            } catch (err) {
+                alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3 border-0 shadow-sm"><i class="bi bi-wifi-off me-2"></i>Server unavailable.</div>`;
+                btn.disabled = false;
+                btn.innerHTML = 'Access My Dashboard';
             }
-        } catch (err) {
-            alertContainer.innerHTML = `<div class="alert alert-danger py-2 small rounded-3">Connection error. Please try again.</div>`;
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Log in';
-        }
+        });
     });
 </script>
 {% endblock %}

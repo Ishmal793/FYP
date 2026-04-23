@@ -1,0 +1,11 @@
+{
+    "IT & Software": {
+        "Software Engineer": ["Learn DSA", "Build Portfolio", "Contribute to Open Source", "Learn System Design"],
+        "Data Scientist": ["Master Statistics", "Learn SQL & Python", "Build ML Models", "Understand Business Domain"],
+        "Cloud Architect": ["Get Certified (AWS/Azure)", "Learn Infrastructure as Code", "Understand Distributed Systems"]
+    },
+    "Business & Marketing": {
+        "Product Manager": ["Learn Agile/Scrum", "Build Product Roadmaps", "Improve Stakeholder Communication"],
+        "Digital Marketer": ["Master SEO/SEM", "Learn Analytics Tools", "Build Content Strategy"]
+    }
+}

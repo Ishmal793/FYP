@@ -1,0 +1,21 @@
+{
+    "Information Technology": {
+        "Languages": ["python", "javascript", "java", "c++", "ruby", "php", "c#", ".net", "sql"],
+        "Frontend": ["react", "node.js", "html", "css", "angular", "vue.js", "graphql", "figma", "ui/ux"],
+        "Backend": ["django", "flask", "fastapi", "spring boot", "laravel", "rest api"],
+        "Cloud & DevOps": ["aws", "docker", "kubernetes", "azure", "gcp", "git", "linux"],
+        "Data Science & AI": ["machine learning", "tensorflow", "data analysis", "tableau", "power bi", "excel", "pandas", "numpy", "scikit-learn", "nlp", "computer vision", "deep learning", "pytorch", "keras"],
+        "Databases": ["sql server", "mysql", "postgresql", "mongodb"]
+    },
+    "Business & Management": {
+        "Methodologies": ["agile", "scrum"],
+        "Management": ["project management", "leadership", "strategic planning"],
+        "Soft Skills": ["communication", "teamwork", "problem solving"]
+    },
+    "Education & Teaching": {
+        "Skills": ["curriculum design", "lesson planning", "classroom management", "educational technology"]
+    },
+    "Healthcare": {
+        "Skills": ["patient care", "medical terminology", "electronic health records", "clinical research"]
+    }
+}

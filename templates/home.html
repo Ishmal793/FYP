@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Home - ElevateCareer{% endblock %}
+{% load static %}
+
+{% block extra_css %}
+<!-- AOS Animation CSS -->
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .home-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 3rem;
+        padding: 5rem 4rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 3.5rem;
+        box-shadow: 0 40px 100px -20px rgba(0,0,0,0.4);
+    }
+    
+    .hero-visual {
+        width: 130px; height: 130px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: #3b82f6;
+        backdrop-filter: blur(10px);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+
+    .insight-card {
+        background: var(--bs-body-bg);
+        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.08);
+        padding: 1.5rem;
+        border-radius: 2rem;
+        height: 100%;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .insight-card:hover {
+        border-color: #2563eb;
+        transform: translateY(-5px);
+    }
+
+    .live-dot {
+        width: 8px; height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .module-card-pro {
+        background: var(--bs-body-bg);
+        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.08);
+        border-radius: 2.5rem;
+        padding: 3rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 100%;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .module-card-pro::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 5px;
+        background: var(--primary-gradient);
+        opacity: 0; transition: 0.3s;
+    }
+    .module-card-pro:hover:not(.locked) {
+        transform: translateY(-15px) scale(1.02);
+        box-shadow: 0 40px 80px -20px rgba(0,0,0,0.15);
+        border-color: rgba(37, 99, 235, 0.3);
+    }
+    .module-card-pro:hover::before { opacity: 1; }
+
+    .lock-pro {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(var(--bs-body-bg-rgb), 0.98);
+        border-radius: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+        backdrop-filter: blur(12px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loader" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<div id="content" style="display: none;">
+    <!-- Hero -->
+    <div class="home-hero" data-aos="zoom-in">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="live-dot"></span>
+                    <span class="text-success small fw-bold text-uppercase" style="letter-spacing: 1px;">AI System Online</span>
+                </div>
+                <h1 class="display-3 fw-bold mb-3" style="font-family: 'Outfit';">Hello, <span id="user-name">Professional</span></h1>
+                <p class="lead text-white-50 mb-0">Your AI-powered career navigation dashboard is ready.</p>
+            </div>
+            <div class="col-lg-4 d-none d-lg-flex justify-content-center">
+                <div class="hero-visual">
+                    <i class="bi bi-rocket-takeoff-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Insights Widgets -->
+    <div class="row g-4 mb-5" data-aos="fade-up">
+        <div class="col-md-4">
+            <div class="insight-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-4 text-primary">
+                        <i class="bi bi-robot fs-4"></i>
+                    </div>
+                    <span class="badge bg-light text-dark rounded-pill">Status</span>
+                </div>
+                <h6 class="fw-bold mb-2">ATS Readiness</h6>
+                <div id="ats-insight-text" class="text-muted small">Checking your latest analysis...</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="insight-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-4 text-success">
+                        <i class="bi bi-briefcase fs-4"></i>
+                    </div>
+                    <span class="badge bg-light text-dark rounded-pill">Matches</span>
+                </div>
+                <h6 class="fw-bold mb-2">Live Opportunities</h6>
+                <div id="job-insight-text" class="text-muted small">Analyze resume to find matches.</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="insight-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-4 text-warning">
+                        <i class="bi bi-lightning fs-4"></i>
+                    </div>
+                    <span class="badge bg-light text-dark rounded-pill">Growth</span>
+                </div>
+                <h6 class="fw-bold mb-2">Skill Gap Advisor</h6>
+                <div id="gap-insight-text" class="text-muted small">Pending resume evaluation.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modules -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6" id="ats-col" data-aos="fade-right">
+            <div class="module-card-pro" onclick="window.location.href='/dashboard/ats/'">
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-4 d-inline-flex mb-4">
+                    <i class="bi bi-cpu-fill fs-2"></i>
+                </div>
+                <h2 class="fw-bold mb-3" style="font-family: 'Outfit';">ATS Intelligence</h2>
+                <p class="text-muted mb-5">Upload your resume for deep ATS scoring and market skill gap identification.</p>
+                <div class="btn btn-primary w-100 py-3 rounded-pill fw-bold">Analyze Resume</div>
+            </div>
+        </div>
+
+        <div class="col-md-6" id="job-col" data-aos="fade-left">
+            <div class="module-card-pro position-relative" id="job-card" onclick="handleJobNav()">
+                <div id="job-lock" class="lock-pro">
+                    <div class="text-center p-4">
+                        <i class="bi bi-lock-fill display-5 text-muted mb-2 d-block"></i>
+                        <h5 class="fw-bold">Locked</h5>
+                        <p class="text-muted small">Analyze resume first.</p>
+                    </div>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-4 d-inline-flex mb-4">
+                    <i class="bi bi-search fs-2"></i>
+                </div>
+                <h2 class="fw-bold mb-3" style="font-family: 'Outfit';">Job Discovery</h2>
+                <p class="text-muted mb-5">Find real-time jobs matched to your unique skill signature with AI ranking.</p>
+                <div class="btn btn-success text-white w-100 py-3 rounded-pill fw-bold">Explore Jobs</div>
+            </div>
+        </div>
+
+        <!-- HR Recruiter Portal -->
+        <div class="col-12 d-none" id="hr-portal" data-aos="zoom-in">
+            <div class="module-card-pro" onclick="window.location.href='/dashboard/hr/'">
+                <div class="row align-items-center">
+                    <div class="col-lg-9">
+                        <div class="bg-info bg-opacity-10 text-info p-4 rounded-4 d-inline-flex mb-4">
+                            <i class="bi bi-people-fill fs-1"></i>
+                        </div>
+                        <h2 class="fw-bold mb-2">Recruiter Access</h2>
+                        <p class="text-muted mb-0">Search, filter, and rank candidates using Hybrid AI semantic search.</p>
+                    </div>
+                    <div class="col-lg-3 text-lg-end">
+                        <button class="btn btn-info text-white px-5 py-3 rounded-pill fw-bold shadow-lg">Enter Portal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        AOS.init();
+        const token = localStorage.getItem('access');
+        if (!token) { window.location.href = '/login/'; return; }
+
+        try {
+            const profileRes = await fetch('/api/auth/profile/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (profileRes.ok) {
+                const profile = await profileRes.json();
+                document.getElementById('user-name').innerText = profile.name || 'Professional';
+
+                if (profile.role === 'hr') {
+                    document.getElementById('hr-portal').classList.remove('d-none');
+                    document.getElementById('ats-col').classList.add('d-none');
+                    document.getElementById('job-col').classList.add('d-none');
+                } else {
+                    const resumeRes = await fetch('/api/resume/completed/', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (resumeRes.ok) {
+                        const data = await resumeRes.json();
+                        if (data.resumes && data.resumes.length > 0) {
+                            document.getElementById('job-lock').style.display = 'none';
+                            window.jobSearchUnlocked = true;
+                            
+                            // Real-time Insights Simulation/Loading
+                            document.getElementById('ats-insight-text').innerText = "Last score: " + (data.resumes[0].score || '85') + "% - Good visibility.";
+                            document.getElementById('job-insight-text').innerText = "New opportunities matched to your profile.";
+                            document.getElementById('gap-insight-text').innerText = "Skills gaps identified. Open ATS to view.";
+                        } else {
+                            document.getElementById('ats-insight-text').innerText = "Start your first analysis to see results.";
+                            document.getElementById('job-insight-text').innerText = "Locked until first resume analysis.";
+                            document.getElementById('gap-insight-text').innerText = "Analyze resume to find training needs.";
+                        }
+                    }
+                }
+            }
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        } catch (e) { console.error(e); }
+    });
+
+    function handleJobNav() {
+        if (window.jobSearchUnlocked) {
+            window.location.href = '/dashboard/jobs/';
+        } else {
+            showToast("Complete your first ATS Analysis to unlock Job Discovery.", "info");
+        }
+    }
+</script>
+{% endblock %}
