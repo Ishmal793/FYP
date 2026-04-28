@@ -7,15 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    showLoader(true);
-
-    try {
-        await Promise.allSettled([loadProfile(), loadResumes()]);
-    } catch (e) {
-        console.error("Critical Profile Init Error:", e);
-    } finally {
-        showLoader(false);
-    }
+    // Load data in background
+    Promise.allSettled([loadProfile(), loadResumes()]);
 
     // Attach Listeners
     attachListener('form-personal', handleSavePersonal);
@@ -62,27 +55,53 @@ async function loadResumes() {
         });
         if (response.ok) {
             const data = await response.json();
-            if (data.resumes && data.resumes.length > 0) {
-                resumeList.innerHTML = data.resumes.map(r => `
-                    <div class="resume-item d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-file-earmark-pdf text-danger fs-5"></i>
-                            <div>
-                                <div class="fw-bold small text-truncate" style="max-width: 120px;">${r.filename || 'Resume.pdf'}</div>
-                                <div class="text-muted" style="font-size: 0.65rem;">ATS Score: ${r.score || '--'}%</div>
-                            </div>
-                        </div>
-                        <a href="${r.file_url}" target="_blank" class="btn btn-sm btn-link text-decoration-none fw-bold small">View</a>
-                    </div>
-                `).join('');
-            } else {
-                resumeList.innerHTML = '<div class="text-center py-3 text-muted small">No resumes found.</div>';
-            }
+            window.allResumes = data.resumes || [];
+            renderResumeList(false);
         }
     } catch (e) {
         console.error("Resume load error:", e);
     }
 }
+
+function renderResumeList(showAll) {
+    const resumeList = document.getElementById('resume-list');
+    const toggleContainer = document.getElementById('resume-toggle-container');
+    const resumes = window.allResumes || [];
+    
+    if (resumes.length === 0) {
+        resumeList.innerHTML = '<div class="text-center py-3 text-muted small">No resumes found.</div>';
+        toggleContainer?.classList.add('d-none');
+        return;
+    }
+
+    const itemsToShow = showAll ? resumes : resumes.slice(0, 3);
+    
+    resumeList.innerHTML = itemsToShow.map(r => `
+        <div class="resume-item d-flex justify-content-between align-items-center animate-fade-in">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-pdf text-danger fs-5"></i>
+                <div>
+                    <div class="fw-bold small text-truncate" style="max-width: 150px;">${r.filename || 'Resume.pdf'}</div>
+                    <div class="text-muted" style="font-size: 0.65rem;">ATS Score: ${r.score || '--'}%</div>
+                </div>
+            </div>
+            <a href="${r.file_url}" target="_blank" class="btn btn-sm btn-link text-decoration-none fw-bold small">View</a>
+        </div>
+    `).join('');
+
+    if (resumes.length > 3) {
+        toggleContainer?.classList.remove('d-none');
+        const btn = document.getElementById('resume-toggle-btn');
+        if (btn) btn.innerHTML = showAll ? 'Show Less <i class="bi bi-chevron-up ms-1"></i>' : `Show More (${resumes.length - 3}) <i class="bi bi-chevron-down ms-1"></i>`;
+    } else {
+        toggleContainer?.classList.add('d-none');
+    }
+}
+
+window.toggleResumeList = () => {
+    window.isShowingAllResumes = !window.isShowingAllResumes;
+    renderResumeList(window.isShowingAllResumes);
+};
 
 function populateUI(data) {
     if (!data) return;

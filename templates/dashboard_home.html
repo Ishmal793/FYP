@@ -3,23 +3,56 @@
 {% load static %}
 {% block extra_css %}
 <style>
+    body {
+        background-color: #f8fafc;
+        background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 40%),
+                          radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.05), transparent 40%);
+    }
     .module-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         min-height: 250px;
+        transform-style: preserve-3d;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05) !important;
+    }
+    .module-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
     }
     .module-card:hover:not(.locked) {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-10px) scale(1.02);
+        box-shadow: 20px 20px 60px rgba(0,0,0,0.08), -20px -20px 60px rgba(255,255,255,0.8) !important;
+        border-color: rgba(255, 255, 255, 0.8) !important;
     }
     .module-card.locked {
-        opacity: 0.6;
+        opacity: 0.7;
         cursor: not-allowed;
+        filter: grayscale(40%);
+    }
+    .icon-wrapper {
+        transition: transform 0.5s ease;
+    }
+    .module-card:hover:not(.locked) .icon-wrapper {
+        transform: translateZ(30px) scale(1.1);
     }
     #job-lock-overlay {
         transition: opacity 0.5s ease, visibility 0.5s ease;
         z-index: 10;
-        display: flex !important; /* Always flex, but handle visibility via opacity */
+        display: flex !important;
+        backdrop-filter: blur(8px);
+        background: rgba(248, 250, 252, 0.85) !important;
     }
     #job-lock-overlay.unlocked {
         opacity: 0;
@@ -32,17 +65,17 @@
 {% block content %}
 <div class="row mb-5 text-center">
     <div class="col-12">
-        <h1 class="fw-bold display-6 mb-2">Career Hub</h1>
-        <p class="text-muted fs-5">Select a module below to proceed with your career journey.</p>
+        <h1 class="fw-bold display-5 mb-2" style="font-family: 'Outfit'; letter-spacing: -1px;">Command <span class="text-primary">Center</span></h1>
+        <p class="text-muted fs-6" style="max-width: 600px; margin: 0 auto; opacity: 0.8;">Orchestrate your professional trajectory through our integrated AI modules. Precision analytical data meets strategic career design.</p>
     </div>
 </div>
 
-<div class="row g-4 justify-content-center" id="dashboard-modules" style="display: none;">
+<div class="row g-4 justify-content-center" id="dashboard-modules">
     <!-- ATS Intelligence Module -->
     <div class="col-md-5" id="ats-module-col">
         <div class="card module-card border-0 shadow-sm rounded-4 h-100 bg-white" onclick="window.location.href='/dashboard/ats/'">
             <div class="card-body p-5 text-center">
-                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-primary">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-primary icon-wrapper shadow-sm border border-primary border-opacity-25">
                     <i class="bi bi-robot fs-1"></i>
                 </div>
                 <h3 class="fw-bold mb-3">ATS Intelligence</h3>
@@ -67,7 +100,7 @@
                     </div>
                 </div>
 
-                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-success">
+                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-success icon-wrapper shadow-sm border border-success border-opacity-25">
                     <i class="bi bi-search fs-1"></i>
                 </div>
                 <h3 class="fw-bold mb-3">Job Search</h3>
@@ -84,7 +117,7 @@
     <div class="col-md-5 d-none" id="hr-recruiter-card">
         <div class="card module-card border-0 shadow-sm rounded-4 h-100 bg-white" onclick="window.location.href='/dashboard/hr/'">
             <div class="card-body p-5 text-center">
-                <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-info">
+                <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex p-4 mb-4 text-info icon-wrapper shadow-sm border border-info border-opacity-25">
                     <i class="bi bi-people-fill fs-1"></i>
                 </div>
                 <h3 class="fw-bold mb-3">Recruiter Portal</h3>
@@ -97,11 +130,7 @@
     </div>
 </div>
 
-<div id="loading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
+<!-- Content visible immediately -->
 {% endblock %}
 
 {% block extra_js %}

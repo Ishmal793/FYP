@@ -22,12 +22,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const dateSplit = r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A';
                 list.innerHTML += `
                     <div class="col-md-6">
-                        <div class="card p-3 resume-card" onclick="selectResume(this, ${r.id}, '${r.role}')">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="fw-bold mb-0 text-success">${r.role}</h6>
-                                <span class="badge bg-success bg-opacity-25 text-success">ATS Score: ${r.score}</span>
+                        <div class="glass-panel job-card-3d p-4 resume-card" onclick="selectResume(this, ${r.id}, '${r.role}')">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-1 text-dark">${r.role}</h5>
+                                    <div class="text-muted" style="font-size: 11px;"><i class="bi bi-calendar3 me-2"></i>Computed on ${dateSplit}</div>
+                                </div>
+                                <span class="badge bg-emerald-500 bg-opacity-10 text-emerald-600 border border-emerald-500 border-opacity-20 rounded-pill px-3 py-2" style="color: var(--job-accent) !important;">
+                                    ATS: ${r.score}%
+                                </span>
                             </div>
-                            <small class="text-muted"><i class="bi bi-clock me-1"></i>Computed on ${dateSplit}</small>
+                            <div class="d-flex align-items-center gap-2 small text-muted">
+                                <i class="bi bi-file-earmark-check"></i> Verified Profile
+                            </div>
                         </div>
                     </div>
                 `;
@@ -42,40 +49,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateTracker(1);
 });
 
+function showPipelineSteps(containerId, steps) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = steps.map((step, i) => `
+        <div class="v-pipeline-step" id="${containerId}-step-${i}">
+            <div class="v-pipeline-dot"></div>
+            <span>${step}</span>
+        </div>
+    `).join('');
+
+    let current = 0;
+    const interval = setInterval(() => {
+        if (current < steps.length) {
+            if (current > 0) {
+                document.getElementById(`${containerId}-step-${current-1}`).classList.remove('active');
+                document.getElementById(`${containerId}-step-${current-1}`).classList.add('completed');
+            }
+            document.getElementById(`${containerId}-step-${current}`).classList.add('active');
+            current++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 1500);
+
+    // Return an object with a stop method that forces completion
+    return {
+        stop: () => {
+            clearInterval(interval);
+            steps.forEach((_, i) => {
+                const el = document.getElementById(`${containerId}-step-${i}`);
+                if (el) {
+                    el.classList.remove('active');
+                    el.classList.add('completed');
+                }
+            });
+        }
+    };
+}
+
 function updateTracker(stage) {
     window.currentStage = stage;
-    const progressLine = document.getElementById('workflow-progress-line');
-    if (progressLine) {
+    const progressFill = document.getElementById('workflow-fill');
+    if (progressFill) {
         const percentage = ((stage - 1) / 4) * 100;
-        progressLine.style.width = `${percentage}%`;
+        progressFill.style.width = `${percentage}%`;
     }
 
     for (let i = 1; i <= 5; i++) {
-        const circle = document.getElementById(`step-${i}-circle`);
-        const text = document.getElementById(`step-${i}-text`);
+        const step = document.getElementById(`step-${i}`);
+        if (!step) continue;
         
-        if (!circle || !text) continue;
-        
+        step.classList.remove('active', 'completed');
         if (i < stage) {
-            circle.className = 'rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-white shadow-sm ring-4 ring-green-100';
-            circle.style.background = 'linear-gradient(to top right, #198754, #20c997)';
-            circle.innerHTML = '<i class="bi bi-check-lg small"></i>';
-            text.className = 'small fw-bold mb-0 text-success';
+            step.classList.add('completed');
         } else if (i === stage) {
-            circle.className = 'rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-white shadow-sm ring-4 ring-green-100';
-            circle.style.background = 'linear-gradient(to top right, #198754, #20c997)';
-            text.className = 'small fw-bold mb-0 text-success';
-            
-            // Reset icons based on step
-            if(i===1) circle.innerHTML = '<i class="bi bi-file-person small"></i>';
-            if(i===2) circle.innerHTML = '<i class="bi bi-search small"></i>';
-            if(i===3) circle.innerHTML = '<i class="bi bi-lightning-charge small"></i>';
-            if(i===4) circle.innerHTML = '<i class="bi bi-cpu small"></i>';
-            if(i===5) circle.innerHTML = '<i class="bi bi-cpu-fill small"></i>';
-        } else {
-            circle.className = 'rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm';
-            circle.style.background = '';
-            text.className = 'small fw-bold mb-0 text-secondary';
+            step.classList.add('active');
         }
     }
 }
@@ -125,23 +154,19 @@ async function fetchAndScoreJobs() {
 
     goToStage(3);
     const loader = document.getElementById('fetching-jobs-loader');
-    const loaderText = document.getElementById('loading-status-text');
     loader.classList.remove('d-none');
     
     document.getElementById('live-jobs-list').innerHTML = '';
     document.getElementById('low-job-warning').classList.add('d-none');
     document.getElementById('deep-analysis-container').style.display = 'none';
 
-    // Simulate Dynamic Status text since API handles it all in one go
-    let stageCount = 0;
-    const stages = ["🔍 Finding jobs...", "⚙ Validating requirements...", "📊 Calculating match scores..."];
-    loaderText.innerText = stages[0];
-    const statusInterval = setInterval(() => {
-        stageCount++;
-        if (stageCount < stages.length) {
-            loaderText.innerText = stages[stageCount];
-        }
-    }, 1500);
+    const statusInterval = showPipelineSteps('fetch-pipeline', [
+        "🌐 Connecting to LinkedIn job boards...",
+        "🧩 Extracting live job cards...",
+        "⚡ Parallel fetching detailed job descriptions...",
+        "⚙️ Applying strict Date and Location filters...",
+        "📊 Preparing Deep ATS matching engine..."
+    ]);
 
     try {
         const response = await fetch('/api/search/search/', {
@@ -159,7 +184,7 @@ async function fetchAndScoreJobs() {
             })
         });
 
-        clearInterval(statusInterval);
+        statusInterval.stop();
         const data = await response.json();
         loader.classList.add('d-none');
 
@@ -180,15 +205,20 @@ async function fetchAndScoreJobs() {
                     let descriptionHtml = '';
                     if (!isValidDescription) {
                         descriptionHtml = `
-                            <div class="alert alert-warning small p-2 mb-0 border-0 bg-warning bg-opacity-10 text-dark">
-                                <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
-                                <strong>⚠️ Description not available</strong><br>
-                                <span class="text-muted small">👉 Click "Open Job Link" and copy description for ATS analysis</span>
+                            <div class="jd-bridge-card" onclick="openManualATSModal(${index})">
+                                <div class="bg-emerald-500 bg-opacity-10 rounded-circle p-2 text-emerald-600" style="color: var(--job-accent);">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold small text-dark">Content Restricted</div>
+                                    <div class="text-muted" style="font-size: 11px;">Paste description to unlock Advanced AI Content Analysis</div>
+                                </div>
+                                <i class="bi bi-chevron-right ms-auto opacity-50"></i>
                             </div>
                         `;
                     } else {
                         descriptionHtml = `
-                            <div class="small text-muted mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">
+                            <div class="small text-muted mb-2 border rounded p-2 bg-white" style="max-height: 120px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap;">
                                 ${job.description}
                             </div>
                         `;
@@ -198,20 +228,30 @@ async function fetchAndScoreJobs() {
 
                     const applyLinkHtml = `<a href="${job.apply_link}" target="_blank" class="text-decoration-none small fw-bold text-primary d-block mt-1"><i class="bi bi-box-arrow-up-right me-1"></i>Open Job Link</a>`;
 
+                    const isSaved = job.is_saved === true;
+                    const heartClass = isSaved ? 'bi-heart-fill text-danger' : 'bi-heart';
+
                     listDiv.innerHTML += `
-                        <div class="col-12 mb-3">
-                            <div class="card border-secondary border-opacity-25 shadow-sm hover-elevate bg-white">
-                                <div class="card-body p-3 d-flex flex-column flex-md-row align-items-md-center gap-3">
-                                    <div class="flex-shrink-0" style="width: 250px;">
-                                        <h6 class="fw-bold text-truncate mb-1" title="${job.title}">${job.title}</h6>
-                                        <p class="text-primary small fw-medium mb-0"><i class="bi bi-building me-1"></i>${job.company}</p>
-                                        <span class="text-muted small"><i class="bi bi-geo-alt me-1"></i>${job.location}</span>
+                        <div class="col-12 mb-4">
+                            <div class="glass-panel job-card-3d position-relative overflow-hidden">
+                                <div class="card-body p-4 d-flex flex-column flex-md-row align-items-md-center gap-4">
+                                    <button class="btn btn-link position-absolute top-0 end-0 p-3 text-decoration-none" onclick="toggleSaveJob(this, '${job.apply_link}')">
+                                        <i class="bi ${heartClass} fs-4"></i>
+                                    </button>
+                                    <div class="flex-shrink-0" style="width: 280px;">
+                                        <h5 class="fw-bold text-truncate mb-1 pe-5" title="${job.title}">${job.title}</h5>
+                                        <p class="text-emerald-500 small fw-bold mb-1" style="color: var(--job-accent);"><i class="bi bi-building me-2"></i>${job.company}</p>
+                                        <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-2"></i>${job.location}</div>
+                                        <div class="mb-2 d-flex gap-2">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="bi bi-linkedin me-1"></i>LinkedIn</span>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"><i class="bi bi-clock me-1"></i>${job.posting_time || 'Recent'}</span>
+                                        </div>
                                         ${applyLinkHtml}
                                     </div>
-                                    <div class="flex-grow-1 border-start px-3" style="min-width: 0;">
+                                    <div class="flex-grow-1 border-start ps-4" style="min-width: 0; border-color: rgba(var(--job-accent-rgb), 0.1) !important;">
                                         ${descriptionHtml}
                                     </div>
-                                    <div class="flex-shrink-0 text-md-end" style="width: 150px;">
+                                    <div class="flex-shrink-0 text-md-end" style="width: 180px;">
                                         ${btnHtml}
                                     </div>
                                 </div>
@@ -290,16 +330,20 @@ async function runDeepAnalysis(index) {
     const resultsContainer = document.getElementById('deep-ats-results');
     const skillContainer = document.getElementById('skill-analysis-results');
     const loader = document.getElementById('deep-ats-loader');
-    const nextBtn = document.getElementById('btn-next-skills');
+
     
     loader.classList.remove('d-none');
     resultsContainer.classList.add('d-none');
     skillContainer.innerHTML = ''; 
     resultsContainer.innerHTML = ''; 
-    nextBtn.style.display = 'none';
-    
-    // Fire Deep ATS
 
+    
+    const statusInterval = showPipelineSteps('deep-ats-pipeline', [
+        "🔬 Tokenizing job description...",
+        "🔗 Running semantic cross-reference...",
+        "🧠 Calculating AI Content Quality...",
+        "✅ Synthesizing Strategic Insights..."
+    ]);
     try {
         const response = await fetch('/api/ats/match/', {
             method: 'POST',
@@ -308,10 +352,12 @@ async function runDeepAnalysis(index) {
         });
         
         const data = await response.json();
+        statusInterval.stop();
         loader.classList.add('d-none');
         
         if (response.ok && data.match_results) {
             const r = data.match_results;
+            window.currentAtsResults = r;
             resultsContainer.classList.remove('d-none');
             
             // EXACT SAME UI RENDERING AS ATS INTELLIGENCE MODULE
@@ -346,52 +392,59 @@ async function runDeepAnalysis(index) {
                             <div class="col-6 col-md-3"><div class="p-2 bg-info bg-opacity-10 rounded text-center border"><h4 class="text-info mb-0">${issues.searchability_issues || 0}</h4><small class="text-muted fw-bold" style="font-size:10px;">Searchability Issues</small></div></div>
                             <div class="col-6 col-md-3"><div class="p-2 bg-success bg-opacity-10 rounded text-center border"><h4 class="text-success mb-0">${issues.recruiter_tips_count || 0}</h4><small class="text-muted fw-bold" style="font-size:10px;">Recruiter Tips</small></div></div>
                         </div>
-                        <div class="d-flex flex-wrap gap-2 small">
-                            <span class="badge bg-secondary">Exp: ${scoreBrk.experience_score}/20</span>
-                            <span class="badge bg-secondary">Edu: ${scoreBrk.education_score}/10</span>
-                            <span class="badge bg-secondary">Format: ${scoreBrk.keyword_format_score}/20</span>
-                            <span class="badge bg-secondary">Skills: ${scoreBrk.hard_skills_score}/40</span>
+                        
+                        <div class="card glass-panel border-0 bg-light bg-opacity-50 p-3">
+                             <h6 class="fw-bold x-small text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-briefcase-fill text-primary me-2"></i>Deep Experience Analysis</h6>
+                             <div class="mb-2">
+                                <span class="badge ${r.deep_experience?.status?.includes('Match') ? 'bg-success' : 'bg-warning text-dark'} mb-2">${r.deep_experience?.status || 'Unknown'}</span>
+                                <div class="small fw-bold text-dark mb-1">Extracted Years: <span class="text-primary">${r.deep_experience?.years_extracted || 'N/A'}</span></div>
+                                <div class="x-small text-muted mb-2">${r.deep_experience?.relevance_explanation || ''}</div>
+                             </div>
+                             <div class="x-small text-dark border-top pt-2">
+                                <span class="fw-bold"><i class="bi bi-magic text-warning me-1"></i>Improvement:</span> ${(r.deep_experience?.suggestions || []).join(', ')}
+                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-light fw-bold small"><i class="bi bi-search me-2"></i>Searchability Check</div>
-                            <ul class="list-group list-group-flush x-small">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Contact Info <span class="badge ${search.contact_info?.email === 'Present' && search.contact_info?.phone === 'Present' ? 'bg-success' : 'bg-danger'}">${search.contact_info?.email || 'Missing'}/${search.contact_info?.phone || 'Missing'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Summary Section <span class="badge ${search.summary_section?.includes('Present') ? 'bg-success' : 'bg-danger'}">${search.summary_section || 'Missing'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Job Title Match <span class="badge ${search.job_title_match?.includes('Found') ? 'bg-success' : 'bg-danger'}">${search.job_title_match || 'Not Found'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Education Heading <span class="badge ${search.education_heading?.includes('Present') ? 'bg-success' : 'bg-danger'}">${search.education_heading || 'Missing'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Experience Heading <span class="badge ${search.experience_heading?.includes('Present') ? 'bg-success' : 'bg-danger'}">${search.experience_heading || 'Missing'}</span></li>
-                            </ul>
+                        <div class="card glass-panel border-0 bg-light bg-opacity-50 p-3 h-100">
+                             <h6 class="fw-bold x-small text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-mortarboard-fill text-info me-2"></i>Deep Education Analysis</h6>
+                             <div class="mb-2">
+                                <span class="badge ${r.deep_education?.status?.includes('Match') ? 'bg-info' : 'bg-danger'} mb-2">${r.deep_education?.status || 'Unknown'}</span>
+                                <div class="x-small text-muted mb-2">${r.deep_education?.explanation || ''}</div>
+                             </div>
+                             <div class="x-small text-dark border-top pt-2">
+                                <span class="fw-bold"><i class="bi bi-magic text-warning me-1"></i>Improvement:</span> ${(r.deep_education?.suggestions || []).join(', ')}
+                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-light fw-bold small"><i class="bi bi-file-earmark-text me-2"></i>Content Quality</div>
-                            <ul class="list-group list-group-flush x-small">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Measurable Results <span class="badge ${quality.measurable_results === 'Found' ? 'bg-success' : 'bg-warning text-dark'}">${quality.measurable_results || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Resume Tone <span class="badge ${quality.resume_tone === 'Positive' ? 'bg-success' : 'bg-secondary'}">${quality.resume_tone || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Web Presence <span class="badge ${quality.web_presence === 'Present' ? 'bg-success' : 'bg-danger'}">${quality.web_presence || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Word Count <span class="badge bg-secondary">${quality.word_count_status || 'N/A'}</span></li>
-                            </ul>
+                        <div class="card glass-panel border-0 bg-light bg-opacity-50 p-3 h-100">
+                             <h6 class="fw-bold x-small text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-file-earmark-text text-success me-2"></i>Quality & Formatting Check</h6>
+                             <ul class="list-group list-group-flush x-small mb-2 bg-transparent">
+                                <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-0 py-1">Measurable Results <span class="badge ${r.deep_quality?.measurable_results_found ? 'bg-success' : 'bg-danger'}">${r.deep_quality?.measurable_results_found ? 'Found' : 'Missing'}</span></li>
+                                <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-0 py-1">Strong Action Verbs <span class="badge ${r.deep_quality?.action_verbs_strong ? 'bg-success' : 'bg-warning text-dark'}">${r.deep_quality?.action_verbs_strong ? 'Strong' : 'Weak'}</span></li>
+                                <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-0 py-1">Job Title Match <span class="badge ${r.deep_job_title?.status?.includes('Found') ? 'bg-success' : 'bg-danger'}">${r.deep_job_title?.status || 'Not Found'}</span></li>
+                             </ul>
+                             <div class="x-small text-dark border-top pt-2">
+                                <div class="mb-1"><span class="fw-bold"><i class="bi bi-chat-right-quote text-secondary me-1"></i>Feedback:</span> ${r.deep_quality?.feedback || ''}</div>
+                                <div><span class="fw-bold"><i class="bi bi-magic text-warning me-1"></i>Suggestion:</span> ${r.deep_job_title?.suggestion || ''}</div>
+                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card bg-light border-0 mb-0 shadow-sm">
+                <div class="card bg-success bg-opacity-10 border-success border-opacity-25 mb-4 shadow-sm">
                     <div class="card-body p-3">
-                        <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Recruiter Tips</h6>
-                        <ul class="mb-0 x-small text-muted ps-3">
-                            ${(r.recruiter_tips || []).map(tip => `<li>${tip}</li>`).join('')}
+                        <h6 class="fw-bold text-success small mb-2"><i class="bi bi-robot text-success me-2"></i>Smart Recruiter Insights</h6>
+                        <ul class="mb-0 x-small text-dark ps-3" style="line-height: 1.6;">
+                            ${(r.deep_insights || r.recruiter_tips || []).map(tip => `<li>${tip}</li>`).join('')}
                         </ul>
                     </div>
                 </div>
-            `;
 
-            skillContainer.innerHTML = `
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <h6 class="fw-bold text-dark small"><i class="bi bi-cpu text-primary me-2"></i>Hard Skills Comparison</h6>
@@ -413,7 +466,7 @@ async function runDeepAnalysis(index) {
                     </div>
                 </div>
 
-                <div class="mb-0 pt-3 border-top">
+                <div class="mb-0 pt-3 border-top border-primary border-opacity-10">
                     <h6 class="fw-bold text-dark small mb-3"><i class="bi bi-zoom-in text-danger me-2"></i>Final Skill Gap Analysis</h6>
                     <div class="row g-3">
                         <div class="col-6">
@@ -433,10 +486,16 @@ async function runDeepAnalysis(index) {
                             </div>
                         </div>
                     </div>
+                    <div class="mt-4 pt-3 border-top text-center">
+                        ${r.overall_match_score >= 70 ? 
+                            `<button class="btn btn-emerald-600 fw-bold px-5 py-2 shadow-sm rounded-pill" onclick="openOptimizationModal()" style="background: var(--job-accent); color: white; border: none;"><i class="bi bi-magic me-2"></i>Unlock Deep Optimization</button>` :
+                            `<button class="btn btn-secondary fw-bold px-5 py-2 shadow-sm rounded-pill" disabled title="Achieve at least 70% ATS score to unlock optimization"><i class="bi bi-lock-fill me-2"></i>Optimization Locked (Requires 70%+)</button>`
+                        }
+                    </div>
                 </div>
             `;
 
-            nextBtn.style.display = 'block';
+
 
             // Trigger 70% Modal
             if (r.overall_match_score >= 70) {
@@ -455,4 +514,121 @@ async function runDeepAnalysis(index) {
     }
 }
 
+async function toggleSaveJob(btn, applyLink) {
+    const token = localStorage.getItem('access');
+    const icon = btn.querySelector('i');
+    
+    try {
+        const response = await fetch('/api/search/save-job/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apply_link: applyLink })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.is_saved) {
+                icon.className = 'bi bi-heart-fill text-danger fs-4';
+                showToast("Job saved to your profile!", "success");
+            } else {
+                icon.className = 'bi bi-heart fs-4';
+                showToast("Job removed from saved list.", "info");
+            }
+        }
+    } catch (e) { console.error(e); }
+}
 
+function openOptimizationModal() {
+    const modal = new bootstrap.Modal(document.getElementById('optimizationModal'));
+    modal.show();
+}
+
+async function startOptimizing() {
+    // Close modal
+    const modalEl = document.getElementById('optimizationModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if(modal) modal.hide();
+
+    const instructions = document.getElementById('optimization-instructions').value.trim();
+
+    // Switch to Stage 5: Optimization
+    goToStage(5);
+    document.getElementById('optimizer-results').style.display = 'none';
+    document.getElementById('optimizer-loading').style.display = 'block';
+
+    const token = localStorage.getItem('access');
+    let gapText = "";
+    if (window.currentAtsResults) {
+        gapText = JSON.stringify({
+            hard_skills_comparison: window.currentAtsResults.hard_skills_comparison,
+            soft_skills_comparison: window.currentAtsResults.soft_skills_comparison,
+            custom_instructions: instructions
+        });
+    }
+
+    const pipelineSteps = [
+        "🔍 Parsing custom optimization constraints...",
+        "🧠 Re-structuring CV logic via AI...",
+        "⚙️ Injecting missing ATS keywords...",
+        "✅ Finalizing optimized document..."
+    ];
+    const statusInterval = showPipelineSteps('optimizer-pipeline', pipelineSteps);
+
+    try {
+        const response = await fetch("/api/optimizer/variants/", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ resume_id: window.currentResumeId, gap_report: gapText })
+        });
+        
+        const data = await response.json();
+        statusInterval.stop();
+        document.getElementById("optimizer-loading").style.display = "none";
+        
+        if (response.ok && data.status === "success" && data.data) {
+            const opt = data.data;
+            document.getElementById("optimizer-results").style.display = "block";
+            
+            document.getElementById("cv-output-text").innerText = opt.optimized_cv_text || "";
+            document.getElementById("optimized-score-display").innerText = `ATS Score: ${opt.new_ats_score_estimate || 0}`;
+            
+            const impList = document.getElementById('improvements-list');
+            impList.innerHTML = (opt.improvements_made || []).map(i => `
+                <li class="list-group-item d-flex align-items-center py-1 bg-transparent">
+                    <i class="bi bi-star-fill text-warning me-2 small"></i>
+                    <span class="small"><strong>${i.type}:</strong> ${i.change}</span>
+                </li>
+            `).join('');
+
+            const sugList = document.getElementById('suggestions-list');
+            sugList.innerHTML = (opt.user_action_suggestions || []).map(s => `
+                <li class="list-group-item d-flex align-items-center py-1 bg-transparent">
+                    <i class="bi bi-lightning-fill text-primary me-2 small"></i>
+                    <span class="small">${s}</span>
+                </li>
+            `).join('');
+
+            window.latestOptimizedCV = opt.optimized_cv_text;
+
+        } else {
+            alert("Optimization failed.");
+            document.getElementById('deep-ats-results').classList.remove('d-none');
+        }
+    } catch(err) {
+        console.error(err);
+        alert("Network error during optimization.");
+        document.getElementById("optimizer-loading").style.display = "none";
+        document.getElementById('deep-ats-results').classList.remove('d-none');
+        if(statusInterval) statusInterval.stop();
+    }
+}
+
+function copyOptimizedCV() {
+    if (window.latestOptimizedCV) {
+        navigator.clipboard.writeText(window.latestOptimizedCV);
+        showToast("Optimized CV copied to clipboard!", "success");
+    }
+}

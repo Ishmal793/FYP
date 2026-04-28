@@ -4,10 +4,10 @@ from typing import List, Optional
 from langchain_groq import ChatGroq
 
 class IssueSummary(BaseModel):
-    hard_skills_issues: int
-    soft_skills_issues: int
-    searchability_issues: int
-    recruiter_tips_count: int
+    hard_skills_issues: int = 0
+    soft_skills_issues: int = 0
+    searchability_issues: int = 0
+    recruiter_tips_count: int = 0
 
 class ContactInfoData(BaseModel):
     email: str = Field(description="'Present' or 'Missing'")
@@ -15,54 +15,81 @@ class ContactInfoData(BaseModel):
     address: str = Field(description="'Present' or 'Missing'")
 
 class SearchabilityStatus(BaseModel):
-    contact_info: ContactInfoData
-    summary_section: str = Field(description="'Present' or 'Missing', with brief explanation")
-    education_heading: str = Field(description="'Present' or 'Missing'")
-    experience_heading: str = Field(description="'Present' or 'Missing'")
-    job_title_match: str = Field(description="'Found' or 'Not Found', with explanation")
-    date_formatting: str = Field(description="'Proper' or 'Improper'")
-    education_match: str = Field(description="'Matches JD' or 'Does Not Match'")
+    contact_info: ContactInfoData = Field(default_factory=lambda: ContactInfoData(email='Missing', phone='Missing', address='Missing'))
+    summary_section: str = "Missing"
+    education_heading: str = "Missing"
+    experience_heading: str = "Missing"
+    job_title_match: str = "Not Found"
+    date_formatting: str = "Improper"
+    education_match: str = "Does Not Match"
 
 class SkillComparisonRow(BaseModel):
-    skill_name: str
-    resume_count: int
-    jd_count: int
-    status: str = Field(description="'Match', 'Missing', or 'Partial'")
+    skill_name: str = "Unknown"
+    resume_count: int = 0
+    jd_count: int = 0
+    status: str = "Missing"
 
 class SoftSkillComparisonRow(BaseModel):
-    skill_name: str
-    resume_status: str = Field(description="'Found' or 'Missing'")
-    jd_status: str = Field(description="'Required' or 'Preferred'")
-    status: str = Field(description="'Match' or 'Missing'")
+    skill_name: str = "Unknown"
+    resume_status: str = "Missing"
+    jd_status: str = "Required"
+    status: str = "Missing"
 
 class ATSScoreBreakdown(BaseModel):
-    hard_skills_score: int = Field(ge=0, le=40)
-    soft_skills_score: int = Field(ge=0, le=10)
-    experience_score: int = Field(ge=0, le=20)
-    education_score: int = Field(ge=0, le=10)
-    keyword_format_score: int = Field(ge=0, le=20)
+    hard_skills_score: int = 0
+    soft_skills_score: int = 0
+    experience_score: int = 0
+    education_score: int = 0
+    keyword_format_score: int = 0
 
 class ContentQualityAnalysis(BaseModel):
-    measurable_results: str = Field(description="'Found' or 'Not Found'")
-    resume_tone: str = Field(description="'Positive' or 'Needs Improvement'")
-    web_presence: str = Field(description="'Present' or 'Missing' (LinkedIn/Portfolio)")
-    word_count_status: str = Field(description="e.g. 'Good' or 'Too Short'")
+    measurable_results: str = "Not Found"
+    resume_tone: str = "Needs Improvement"
+    web_presence: str = "Missing"
+    word_count_status: str = "Too Short"
 
 class SkillGapSummary(BaseModel):
-    skills_you_have: List[str]
-    missing_critical_skills: List[str]
-    skills_to_improve: List[str]
+    skills_you_have: List[str] = Field(default_factory=list)
+    missing_critical_skills: List[str] = Field(default_factory=list)
+    skills_to_improve: List[str] = Field(default_factory=list)
+
+class DeepEducation(BaseModel):
+    status: str = "Not Matching"
+    explanation: str = "N/A"
+    suggestions: List[str] = Field(default_factory=list)
+
+class DeepExperience(BaseModel):
+    status: str = "Not Matching"
+    years_extracted: str = "0"
+    relevance_explanation: str = "N/A"
+    suggestions: List[str] = Field(default_factory=list)
+
+class DeepQuality(BaseModel):
+    measurable_results_found: bool = False
+    action_verbs_strong: bool = False
+    feedback: str = "N/A"
+
+class DeepJobTitle(BaseModel):
+    status: str = "Not Found"
+    suggestion: str = "N/A"
 
 class DeterministicATSResponse(BaseModel):
-    overall_match_score: int = Field(ge=0, le=100)
-    issue_summary: IssueSummary
-    searchability: SearchabilityStatus
-    hard_skills_comparison: List[SkillComparisonRow]
-    soft_skills_comparison: List[SoftSkillComparisonRow]
-    score_breakdown: ATSScoreBreakdown
-    content_quality: ContentQualityAnalysis
-    skill_gap_summary: SkillGapSummary
-    recruiter_tips: List[str] = Field(description="3-5 actionable improvement tips")
+    overall_match_score: int = 0
+    issue_summary: IssueSummary = Field(default_factory=IssueSummary)
+    searchability: SearchabilityStatus = Field(default_factory=SearchabilityStatus)
+    hard_skills_comparison: List[SkillComparisonRow] = Field(default_factory=list)
+    soft_skills_comparison: List[SoftSkillComparisonRow] = Field(default_factory=list)
+    score_breakdown: ATSScoreBreakdown = Field(default_factory=lambda: ATSScoreBreakdown(hard_skills_score=0, soft_skills_score=0, experience_score=0, education_score=0, keyword_format_score=0))
+    content_quality: ContentQualityAnalysis = Field(default_factory=lambda: ContentQualityAnalysis(measurable_results='Not Found', resume_tone='Needs Improvement', web_presence='Missing', word_count_status='Too Short'))
+    skill_gap_summary: SkillGapSummary = Field(default_factory=SkillGapSummary)
+    recruiter_tips: List[str] = Field(default_factory=list)
+    
+    # New Deep Analysis Fields
+    deep_education: DeepEducation = Field(default_factory=lambda: DeepEducation(status='Not Matching', explanation='Error', suggestions=[]))
+    deep_experience: DeepExperience = Field(default_factory=lambda: DeepExperience(status='Not Matching', years_extracted='0', relevance_explanation='Error', suggestions=[]))
+    deep_quality: DeepQuality = Field(default_factory=lambda: DeepQuality(measurable_results_found=False, action_verbs_strong=False, feedback='Error'))
+    deep_job_title: DeepJobTitle = Field(default_factory=lambda: DeepJobTitle(status='Not Found', suggestion='Error'))
+    deep_insights: List[str] = Field(default_factory=list)
 
 def get_ats_llm():
     api_key = os.environ.get("GROQ_API_KEY")
@@ -76,6 +103,7 @@ def get_ats_llm():
     )
     return llm.with_structured_output(DeterministicATSResponse)
 
+
 def calculate_ats_match(parsed_resume: dict, job_title: str, job_description: str) -> dict:
     print(f"[DEBUG - ATS_MATCHER] Matching for '{job_title}'. Resume keys: {list(parsed_resume.keys())}")
     if not job_description or not parsed_resume:
@@ -84,7 +112,7 @@ def calculate_ats_match(parsed_resume: dict, job_title: str, job_description: st
     structured_llm = get_ats_llm()
     
     prompt = f"""
-    You are an AI ATS Intelligence Engine and Deep Match Analyzer.
+    You are an AI ATS Intelligence Engine and Deep Match Analyzer (Similar to Jobscan/Resume Worded).
     
     Candidate Resume Data:
     {parsed_resume}
@@ -104,24 +132,27 @@ def calculate_ats_match(parsed_resume: dict, job_title: str, job_description: st
        
        *If the candidate lacks required hard skills or experience, the overall score MUST be below 80.*
     
-    2. Searchability Constraints:
-       - Strictly evaluate if Email, Phone, Address are Present/Missing (check 'email', 'phone' fields in Resume Data).
-       - Verify existence of explicit Summary, Education, and Work Experience sections (check 'experience' and 'education' arrays).
-       - Job Title Match: Does the exact or highly similar Job Title appear in the resume? (check 'experience' titles).
-       - Determine Date Formatting and Education Match accurately.
+    2. Deep Education & Experience Analysis (NEW):
+       - deep_education: Explain why education matches or fails. Suggest improvements (e.g., 'Add relevant coursework').
+       - deep_experience: Extract YOE. Compare roles. Explain relevance. Provide actionable suggestions.
+       - deep_quality: Detect measurable results (numbers, %). Give specific feedback if missing.
+       - deep_job_title: Detect if exact title is in resume. Suggest adding it.
+       - deep_insights: Provide smart, recruiter-level insights about the candidate's profile.
     
-    3. Skills Grid & Issue Summary:
-       - Analyze the 'skills', 'tools', 'experience', and 'projects' fields in the Resume Data to find mentions of required JD skills.
-       - Create comparisons. Hard skills count (occurrences in resume) vs JD count (required by JD). 
-       - Status -> Match, Missing, Partial.
-       - soft_skills_comparison -> Match, Missing.
-       - issue_summary MUST accurately reflect the number of missing/partial skills and searchability failures.
+    3. Searchability Constraints:
+       - Strictly evaluate if Email, Phone, Address are Present/Missing.
+       - Verify explicit Summary, Education, and Work Experience sections.
+       - Determine Date Formatting accurately.
     
-    4. Recruiter Tips: Provide 3-5 highly realistic, actionable tips based on the gaps identified.
+    4. Skills Grid & Issue Summary:
+       - Analyze 'skills', 'tools', 'experience' fields.
+       - You MUST populate BOTH `hard_skills_comparison` and `soft_skills_comparison` arrays.
+       - `hard_skills_comparison` status -> 'Match', 'Missing', or 'Partial'.
+       - `soft_skills_comparison` status -> 'Match' or 'Missing'.
     
     5. Final Skill Gap: Fill the skill_gap_summary precisely based on matched and missing critical skills.
     
-    Output exactly corresponding to the JSON schema. No extra text.
+    Output exactly corresponding to the JSON schema. YOU MUST INCLUDE ALL ARRAYS (hard_skills_comparison AND soft_skills_comparison). No extra text.
     """
     
     try:
@@ -242,5 +273,26 @@ def calculate_ats_match(parsed_resume: dict, job_title: str, job_description: st
             "skill_gap_summary": {
                 "skills_you_have": [], "missing_critical_skills": [], "skills_to_improve": []
             },
-            "recruiter_tips": ["Retry processing. Formatting failed."]
+            "recruiter_tips": ["Retry processing. Formatting failed."],
+            "deep_education": {
+                "status": "Not Matching",
+                "explanation": "Could not analyze education due to an error.",
+                "suggestions": ["Ensure your education section is clearly formatted."]
+            },
+            "deep_experience": {
+                "status": "Not Matching",
+                "years_extracted": "Unknown",
+                "relevance_explanation": "Could not analyze experience.",
+                "suggestions": ["Use standard formatting for your work history."]
+            },
+            "deep_quality": {
+                "measurable_results_found": False,
+                "action_verbs_strong": False,
+                "feedback": "Could not analyze quality metrics."
+            },
+            "deep_job_title": {
+                "status": "Not Found",
+                "suggestion": "Include the exact job title in your resume."
+            },
+            "deep_insights": ["System error occurred. Please try again."]
         }

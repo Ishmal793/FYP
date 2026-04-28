@@ -6,7 +6,9 @@ let appState = {
     currentSelectedJob: null,
     currentJD: null,
     atsResults: null,
-    jobSearchUnlocked: false
+    jobSearchUnlocked: false,
+    cachedAdvisorData: null,
+    advisorPromise: null
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -102,11 +104,28 @@ async function handleResumeUpload(event) {
     const token = localStorage.getItem('access');
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Parsing with AI...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
     
     statusDiv.style.display = 'block';
-    statusDiv.innerHTML = `<div class="text-center py-4 mt-3 rounded bg-primary bg-opacity-10"><div class="spinner-grow text-primary mb-3"></div><h6 class="fw-bold">AI Document Analysis</h6></div>`;
+    statusDiv.innerHTML = `
+        <div class="p-4 rounded glass-panel text-center">
+            <div class="ai-scanner-loader text-primary">
+                <div class="scanner-bar"></div>
+                <div class="outer-ring"></div>
+                <div class="inner-dot"></div>
+            </div>
+            <h6 class="fw-bold mb-3">Initializing Document Intelligence</h6>
+            <div id="upload-pipeline" class="pipeline-status-container"></div>
+        </div>
+    `;
     
+    showPipelineSteps('upload-pipeline', [
+        'Connecting to NLP Layer...',
+        'Tokenizing Text Vectors...',
+        'Applying Semantic Mapping...',
+        'Validating Structural Integrity...'
+    ]);
+
     updateWorkflowStage(2);
 
     const formData = new FormData();
@@ -418,6 +437,9 @@ async function lockJDAndRunATS() {
             appState.jobSearchUnlocked = true; // Unlock Job Search
             document.getElementById("ats-results").style.display = "block";
             
+            // Pre-fetch Course Advisor in background while user reads ATS results
+            startCourseAdvisorBackgroundSearch();
+            
             const r = data.match_results;
             const issues = r.issue_summary || {};
             const search = r.searchability || {};
@@ -464,28 +486,59 @@ async function lockJDAndRunATS() {
                     </div>
                 </div>
                 
-                <!-- Searchability & Content Quality -->
+                <!-- Deep Jobscan-like Analysis -->
                 <div class="row g-4 mb-4">
                     <div class="col-md-6">
-                        <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-light fw-bold"><i class="bi bi-search me-2"></i>Searchability Check</div>
-                            <ul class="list-group list-group-flush small">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Contact Info <span class="badge ${search.contact_info?.email === 'Present' && search.contact_info?.phone === 'Present' ? 'bg-success' : 'bg-danger'}">${search.contact_info?.email}/${search.contact_info?.phone}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Summary Section <span class="badge ${search.summary_section === 'Present' ? 'bg-success' : 'bg-danger'}">${search.summary_section || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Job Title Match <span class="badge ${search.job_title_match === 'Found' ? 'bg-success' : 'bg-danger'}">${search.job_title_match || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Education Heading <span class="badge ${search.education_heading === 'Present' ? 'bg-success' : 'bg-danger'}">${search.education_heading || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Experience Heading <span class="badge ${search.experience_heading === 'Present' ? 'bg-success' : 'bg-danger'}">${search.experience_heading || 'N/A'}</span></li>
-                            </ul>
+                        <div class="card glass-panel border-0 bg-light bg-opacity-50 p-4 h-100 shadow-sm">
+                             <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-briefcase-fill text-primary me-2"></i>Deep Experience Analysis</h6>
+                             <div class="mb-3">
+                                <span class="badge ${r.deep_experience?.status?.includes('Match') ? 'bg-success' : 'bg-warning text-dark'} mb-2 fs-6 px-3 py-2">${r.deep_experience?.status || 'Unknown'}</span>
+                                <div class="fw-bold text-dark mb-2">Extracted Years: <span class="text-primary">${r.deep_experience?.years_extracted || 'N/A'}</span></div>
+                                <div class="small text-muted mb-3" style="line-height: 1.6;">${r.deep_experience?.relevance_explanation || ''}</div>
+                             </div>
+                             <div class="small text-dark border-top pt-3 mt-auto">
+                                <span class="fw-bold"><i class="bi bi-magic text-warning me-2"></i>Improvement Plan:</span> ${(r.deep_experience?.suggestions || []).join('<br> • ')}
+                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card glass-panel border-0 bg-light bg-opacity-50 p-4 h-100 shadow-sm">
+                             <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-mortarboard-fill text-info me-2"></i>Deep Education Analysis</h6>
+                             <div class="mb-3">
+                                <span class="badge ${r.deep_education?.status?.includes('Match') ? 'bg-info' : 'bg-danger'} mb-2 fs-6 px-3 py-2">${r.deep_education?.status || 'Unknown'}</span>
+                                <div class="small text-muted mb-3" style="line-height: 1.6;">${r.deep_education?.explanation || ''}</div>
+                             </div>
+                             <div class="small text-dark border-top pt-3 mt-auto">
+                                <span class="fw-bold"><i class="bi bi-magic text-warning me-2"></i>Improvement Plan:</span> ${(r.deep_education?.suggestions || []).join('<br> • ')}
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card glass-panel border-0 bg-light bg-opacity-50 p-4 h-100 shadow-sm">
+                             <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-file-earmark-text text-success me-2"></i>Content Quality Check</h6>
+                             <ul class="list-group list-group-flush small mb-3 bg-transparent">
+                                <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-0 py-2">Measurable Results <span class="badge ${r.deep_quality?.measurable_results_found ? 'bg-success' : 'bg-danger'} p-2">${r.deep_quality?.measurable_results_found ? 'Found' : 'Missing'}</span></li>
+                                <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-0 py-2">Strong Action Verbs <span class="badge ${r.deep_quality?.action_verbs_strong ? 'bg-success' : 'bg-warning text-dark'} p-2">${r.deep_quality?.action_verbs_strong ? 'Strong' : 'Weak'}</span></li>
+                                <li class="list-group-item bg-transparent px-0 d-flex justify-content-between align-items-center border-0 py-2">Job Title Match <span class="badge ${r.deep_job_title?.status?.includes('Found') ? 'bg-success' : 'bg-danger'} p-2">${r.deep_job_title?.status || 'Not Found'}</span></li>
+                             </ul>
+                             <div class="small text-dark border-top pt-3 mt-auto" style="line-height: 1.6;">
+                                <div class="mb-2"><span class="fw-bold"><i class="bi bi-chat-right-quote text-secondary me-2"></i>Feedback:</span> ${r.deep_quality?.feedback || ''}</div>
+                                <div><span class="fw-bold"><i class="bi bi-magic text-warning me-2"></i>Suggestion:</span> ${r.deep_job_title?.suggestion || ''}</div>
+                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-light fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Content Quality</div>
-                            <ul class="list-group list-group-flush small">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Measurable Results <span class="badge ${quality.measurable_results === 'Found' ? 'bg-success' : 'bg-warning text-dark'}">${quality.measurable_results || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Resume Tone <span class="badge ${quality.resume_tone === 'Positive' ? 'bg-success' : 'bg-secondary'}">${quality.resume_tone || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Web Presence (LinkedIn, etc) <span class="badge ${quality.web_presence === 'Present' ? 'bg-success' : 'bg-danger'}">${quality.web_presence || 'N/A'}</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">Word Count Status <span class="badge bg-secondary">${quality.word_count_status || 'N/A'}</span></li>
+                            <div class="card-header bg-light fw-bold p-3"><i class="bi bi-search me-2"></i>Searchability Matrix</div>
+                            <ul class="list-group list-group-flush small p-2">
+                                <li class="list-group-item d-flex justify-content-between align-items-center border-0">Contact Info <span class="badge ${search.contact_info?.email === 'Present' && search.contact_info?.phone === 'Present' ? 'bg-success' : 'bg-danger'}">${search.contact_info?.email}/${search.contact_info?.phone}</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center border-0">Summary Section <span class="badge ${search.summary_section === 'Present' ? 'bg-success' : 'bg-danger'}">${search.summary_section || 'N/A'}</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center border-0">Education Heading <span class="badge ${search.education_heading === 'Present' ? 'bg-success' : 'bg-danger'}">${search.education_heading || 'N/A'}</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center border-0">Experience Heading <span class="badge ${search.experience_heading === 'Present' ? 'bg-success' : 'bg-danger'}">${search.experience_heading || 'N/A'}</span></li>
                             </ul>
                         </div>
                     </div>
@@ -530,6 +583,21 @@ async function lockJDAndRunATS() {
     finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cpu-fill me-2"></i>Lock JD & Run ATS Match'; }
 }
 
+async function startCourseAdvisorBackgroundSearch() {
+    const token = localStorage.getItem('access');
+    appState.advisorPromise = fetch("/api/ats/advise-courses/", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ resume_id: window.currentResumeId })
+    }).then(res => res.json()).then(data => {
+        appState.cachedAdvisorData = data;
+        return data;
+    }).catch(err => {
+        console.error("Background course fetch failed", err);
+        return null;
+    });
+}
+
 async function showSkillGap() {
     goToStage(7);
     const results = appState.atsResults;
@@ -550,63 +618,88 @@ async function showSkillGap() {
         document.getElementById('gap-missing-skills').innerHTML += gap.skills_to_improve.map(s => `<span class="badge bg-warning bg-opacity-10 text-dark border border-warning p-2 mt-2">${s} (Improve)</span>`).join('');
     }
 
-    // 2. Trigger Gemini Course Advisor
-    document.getElementById('course-advisor-results').style.display = 'none';
-    document.getElementById('course-advisor-loading').style.display = 'block';
+    // 2. Display Course Advisor (Instant if cached)
+    const container = document.getElementById('course-advisor-results');
+    const loader = document.getElementById('course-advisor-loading');
+    
+    container.style.display = 'none';
+    loader.style.display = 'block';
 
-    const token = localStorage.getItem('access');
-    try {
-        const advRes = await fetch("/api/ats/advise-courses/", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ resume_id: window.currentResumeId })
-        });
+    let advisorData = appState.cachedAdvisorData;
+    
+    // Start status cycling to mask delay
+    const statusSteps = document.getElementById('course-status-steps');
+    const stepMessages = [
+        "Synthesizing Syllabi...",
+        "Evaluating Prerequisites...",
+        "Calculating ROI...",
+        "Cross-referencing Global Rankings...",
+        "Filtering Specialized Content...",
+        "Finalizing Curriculum..."
+    ];
+    let stepIdx = 0;
+    const stepInterval = setInterval(() => {
+        if (!loader || loader.style.display === 'none') {
+            clearInterval(stepInterval);
+            return;
+        }
+        if (statusSteps) {
+            const badge = document.createElement('span');
+            badge.className = 'badge rounded-pill bg-info bg-opacity-10 text-info border border-info border-opacity-25 py-2 px-3 animate-fade-in';
+            badge.innerText = stepMessages[stepIdx % stepMessages.length];
+            statusSteps.appendChild(badge);
+            stepIdx++;
+            if (statusSteps.children.length > 5) statusSteps.removeChild(statusSteps.children[0]);
+        }
+    }, 4500);
+
+    if (!advisorData && appState.advisorPromise) {
+        advisorData = await appState.advisorPromise;
+    } else if (!advisorData) {
+        await startCourseAdvisorBackgroundSearch();
+        advisorData = await appState.advisorPromise;
+    }
+    
+    clearInterval(stepInterval);
+    loader.style.display = 'none';
+    
+    if (advisorData && advisorData.advisor_results) {
+        container.style.display = 'block';
+        const courses = advisorData.advisor_results.courses || [];
+        const cardsContainer = document.getElementById('course-cards-container');
         
-        const advisorData = await advRes.json();
-        document.getElementById('course-advisor-loading').style.display = 'none';
-        
-        if (advRes.ok && advisorData.advisor_results) {
-            document.getElementById('course-advisor-results').style.display = 'block';
-            const courses = advisorData.advisor_results.courses || [];
-            const cardsContainer = document.getElementById('course-cards-container');
-            
-            if (courses.length === 0) {
-                cardsContainer.innerHTML = '<div class="col-12"><p class="text-muted small">No specific courses needed or found. You are highly aligned!</p></div>';
-            } else {
-                cardsContainer.innerHTML = courses.map(c => {
-                    const isUdemy = c.platform.toLowerCase().includes('udemy');
-                    const platformClass = isUdemy ? 'text-purple fw-bold' : 'text-primary fw-bold';
-                    const priorityClass = c.priority.toLowerCase().includes('high') ? 'bg-danger' : 'bg-warning text-dark';
-                    
-                    return `
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 border shadow-sm">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <span class="badge bg-secondary bg-opacity-10 text-dark border">${c.skill}</span>
-                                    <span class="badge ${priorityClass}">${c.priority} Priority</span>
-                                </div>
-                                <h6 class="fw-bold mb-1" style="font-size:0.95rem;">${c.course_title}</h6>
-                                <p class="small text-muted mb-3" style="font-size:0.8rem;">${c.reason}</p>
-                                <div class="d-flex justify-content-between align-items-center mt-auto border-top pt-2">
-                                    <span class="small ${platformClass}"><i class="bi bi-mortarboard-fill me-1"></i>${c.platform}</span>
-                                    <span class="badge bg-light text-secondary border">${c.level}</span>
-                                </div>
-                                <div class="mt-3 text-center">
-                                    <a href="${c.course_link || '#'}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold w-100 shadow-sm">Start Course <i class="bi bi-box-arrow-up-right ms-1"></i></a>
-                                </div>
+        if (courses.length === 0) {
+            cardsContainer.innerHTML = '<div class="col-12"><p class="text-muted small">No specific courses needed or found. You are highly aligned!</p></div>';
+        } else {
+            cardsContainer.innerHTML = courses.map(c => {
+                const isUdemy = c.platform.toLowerCase().includes('udemy');
+                const platformClass = isUdemy ? 'text-purple fw-bold' : 'text-primary fw-bold';
+                const priorityClass = c.priority.toLowerCase().includes('high') ? 'bg-danger' : 'bg-warning text-dark';
+                
+                return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border shadow-sm hover-lift">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-secondary bg-opacity-10 text-dark border">${c.skill}</span>
+                                <span class="badge ${priorityClass}">${c.priority} Priority</span>
+                            </div>
+                            <h6 class="fw-bold mb-1" style="font-size:0.95rem;">${c.course_title}</h6>
+                            <p class="small text-muted mb-3" style="font-size:0.8rem; height: 3.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${c.reason}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-auto border-top pt-2">
+                                <span class="small ${platformClass}"><i class="bi bi-mortarboard-fill me-1"></i>${c.platform}</span>
+                                <span class="badge bg-light text-secondary border">${c.level}</span>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <a href="${c.course_link || '#'}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold w-100 shadow-sm">Start Course <i class="bi bi-box-arrow-up-right ms-1"></i></a>
                             </div>
                         </div>
-                    </div>`;
-                }).join('');
-            }
-        } else {
-            console.error("Course Advisor Failed:", advisorData.error);
-            document.getElementById('course-advisor-loading').style.display = 'none';
+                    </div>
+                </div>`;
+            }).join('');
         }
-    } catch(err) {
-        console.error("Network Error during advisor fetch:", err);
-        document.getElementById('course-advisor-loading').style.display = 'none';
+    } else {
+        console.error("Course Advisor Failed:", advisorData ? advisorData.error : "Unknown Error");
     }
 }
 
@@ -830,3 +923,89 @@ async function copyOptimizedCV() {
 }
 
 // End of logic
+
+// --- UI Pipeline Helpers ---
+function showPipelineSteps(containerId, steps) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = steps.map((step, idx) => `
+        <div class="pipeline-step" id="${containerId}-step-${idx}">
+            <div class="pipeline-dot"></div>
+            <span class="small fw-medium">${step}</span>
+        </div>
+    `).join('');
+
+    let currentStepIdx = 0;
+    const interval = setInterval(() => {
+        if (currentStepIdx > 0) {
+            const prevStep = document.getElementById(`${containerId}-step-${currentStepIdx - 1}`);
+            if (prevStep) {
+                prevStep.classList.remove('active');
+                prevStep.classList.add('completed');
+                prevStep.querySelector('.pipeline-dot').innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+            }
+        }
+        
+        const currentStep = document.getElementById(`${containerId}-step-${currentStepIdx}`);
+        if (currentStep) {
+            currentStep.classList.add('active');
+        } else {
+            clearInterval(interval);
+        }
+        currentStepIdx++;
+    }, 1200); // Progress every 1.2s to mask backend delay
+}
+
+// Update existing loading functions to use pipeline
+const originalFetchJobFamilies = fetchJobFamilies;
+fetchJobFamilies = async function() {
+    originalFetchJobFamilies.apply(this, arguments);
+    showPipelineSteps('field-pipeline', [
+        'Analyzing Skill Clusters...',
+        'Mapping Industry Domains...',
+        'Cross-referencing Global Standards...'
+    ]);
+};
+
+const originalLockFieldAndPredictRoles = lockFieldAndPredictRoles;
+lockFieldAndPredictRoles = async function() {
+    originalLockFieldAndPredictRoles.apply(this, arguments);
+    showPipelineSteps('predict-pipeline', [
+        'Running Predictive Alignment...',
+        'Matching Market Competencies...',
+        'Optimizing Career Trajectory...'
+    ]);
+};
+
+const originalGenerateTargetJD = generateTargetJD;
+generateTargetJD = async function() {
+    originalGenerateTargetJD.apply(this, arguments);
+    showPipelineSteps('jd-pipeline', [
+        'Synthesizing Master JD...',
+        'Injecting Core Qualifications...',
+        'Finalizing Professional Standards...'
+    ]);
+};
+
+const originalLockJDAndRunATS = lockJDAndRunATS;
+lockJDAndRunATS = async function() {
+    originalLockJDAndRunATS.apply(this, arguments);
+    setTimeout(() => {
+        showPipelineSteps('ats-pipeline', [
+            'Parsing Semantic Vectors...',
+            'Executing Match Algorithms...',
+            'Identifying Strategic Gaps...'
+        ]);
+    }, 100);
+};
+
+const originalRunCVOptimizer = runCVOptimizer;
+runCVOptimizer = async function() {
+    originalRunCVOptimizer.apply(this, arguments);
+    showPipelineSteps('opt-pipeline', [
+        'Re-architecting Professional Content...',
+        'Systematic Keyword Injection...',
+        'Optimizing for ATS Parsers...'
+    ]);
+};

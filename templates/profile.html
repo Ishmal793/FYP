@@ -32,12 +32,21 @@
     }
 
     .profile-card-pro {
-        background: var(--bs-body-bg);
-        border: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.08);
-        border-radius: 2rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 1.5rem;
         padding: 2rem;
         height: 100%;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .profile-card-pro:hover {
+        transform: perspective(1000px) rotateX(2deg) translateY(-5px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+        border-color: var(--accent-color) !important;
     }
 
     .field-label {
@@ -92,11 +101,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="profile-loader" class="text-center py-5">
-    <div class="spinner-grow text-primary" role="status"></div>
-</div>
-
-<div id="profile-content" style="display: none;">
+<div id="profile-content">
     <!-- Hero Card -->
     <div class="profile-hero" data-aos="zoom-in">
         <div class="row align-items-center">
@@ -257,7 +262,14 @@
                 <div class="col-md-6" data-aos="fade-up">
                     <div class="profile-card-pro">
                         <h5 class="section-title-pro mb-4"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Analyzed Resumes</h5>
-                        <div id="resume-list"></div>
+                        <div id="resume-list-container">
+                            <div id="resume-list"></div>
+                            <div id="resume-toggle-container" class="text-center mt-2 d-none">
+                                <button class="btn btn-sm btn-link text-decoration-none fw-bold" onclick="toggleResumeList()" id="resume-toggle-btn">
+                                    Show More <i class="bi bi-chevron-down ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

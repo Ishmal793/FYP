@@ -3,109 +3,376 @@
 {% load static %}
 {% block extra_css %}
 <style>
-    .resume-card { transition: all 0.2s ease; cursor: pointer; }
-    .resume-card:hover { border-color: #0d6efd !important; box-shadow: 0 .125rem .25rem rgba(13,110,253,.25)!important; }
-    .resume-card.selected { border-color: #0d6efd !important; background-color: rgba(13,110,253,.05); border-width: 2px !important; }
-    .hover-elevate { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .hover-elevate:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    :root {
+        --job-accent: #10b981;
+        --job-accent-rgb: 16, 185, 129;
+    }
+    
+    .ats-hero-container {
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+        border-radius: 2rem;
+        padding: 4rem 2rem;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        box-shadow: 0 40px 100px -20px rgba(6, 78, 59, 0.4);
+    }
+    
+    .ats-hero-grid {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        perspective: 1000px;
+        transform: rotateX(60deg) translateY(-50%) translateZ(-100px);
+        opacity: 0.3;
+    }
+
+    .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid var(--glass-border);
+        border-radius: 1.5rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .pipeline-status-container {
+        background: rgba(0,0,0,0.2);
+        border-radius: 1rem;
+        padding: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .status-dot-pulse {
+        width: 10px; height: 10px;
+        background: var(--job-accent);
+        border-radius: 50%;
+        box-shadow: 0 0 15px var(--job-accent);
+        animation: pulseStatus 1.5s infinite;
+    }
+
+    @keyframes pulseStatus {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.5; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .job-card-3d {
+        transition: all 0.4s ease;
+        border: 1px solid var(--glass-border);
+        transform-style: preserve-3d;
+    }
+    .job-card-3d:hover {
+        transform: perspective(1000px) rotateX(2deg) translateY(-5px);
+        border-color: var(--job-accent);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    /* Pipeline Step Tracker Custom */
+    .pipeline-visualizer {
+        display: flex;
+        justify-content: space-between;
+        padding: 2rem 1rem;
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .pipeline-step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+    .step-node {
+        width: 45px; height: 45px;
+        border-radius: 50%;
+        background: var(--glass-bg);
+        border: 2px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        transition: all 0.5s ease;
+        color: var(--bs-emphasis-color);
+        font-size: 1.2rem;
+    }
+    .pipeline-step.active .step-node {
+        background: var(--job-accent);
+        border-color: var(--job-accent);
+        color: white;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        transform: scale(1.15);
+    }
+    .pipeline-step.completed .step-node {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: var(--job-accent);
+        color: var(--job-accent);
+    }
+    .pipeline-connector {
+        position: absolute;
+        top: 55px; left: 0; right: 0;
+        height: 3px;
+        background: var(--glass-border);
+        z-index: 1;
+        width: 80%;
+        margin: 0 auto;
+    }
+    
+    /* Literal 3D Button Style */
+    .btn-3d-home {
+        display: inline-block;
+        text-decoration: none;
+        background: #064e3b;
+        border-radius: 12px;
+        position: relative;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        outline-offset: 4px;
+        transition: filter 250ms;
+    }
+    .btn-3d-top {
+        display: block;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: white !important;
+        background: linear-gradient(135deg, #10b981, #059669);
+        transform: translateY(-4px);
+        transition: transform 250ms cubic-bezier(.3, .7, .4, 1);
+        border: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-3d-home:hover .btn-3d-top { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); }
+    .btn-3d-home:active .btn-3d-top { transform: translateY(-2px); }
+
+    /* JD Bridge Style */
+    .jd-bridge-card {
+        background: rgba(var(--job-accent-rgb), 0.05);
+        border: 1px dashed var(--job-accent);
+        border-radius: 1rem;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .jd-bridge-card:hover {
+        background: rgba(var(--job-accent-rgb), 0.1);
+        transform: scale(1.02);
+    }
+    
+    /* 3-Ring AI Scanner */
+    .ai-scanner-3-ring {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 2rem;
+    }
+    .ring-1 { position: absolute; inset: 0; border: 3px solid var(--job-accent); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+    .ring-2 { position: absolute; inset: 10px; border: 3px solid rgba(var(--job-accent-rgb), 0.3); border-bottom-color: var(--job-accent); border-radius: 50%; animation: spin-reverse 1.5s linear infinite; }
+    /* Vertical Pipeline for Loaders */
+    .vertical-pipeline-container {
+        max-width: 450px;
+        margin: 2rem auto 0;
+        text-align: left;
+        background: rgba(var(--job-accent-rgb), 0.03);
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(var(--job-accent-rgb), 0.1);
+    }
+    .v-pipeline-step {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.8rem;
+        opacity: 0.3;
+        transition: all 0.4s ease;
+        font-size: 0.9rem;
+    }
+    .v-pipeline-step.active {
+        opacity: 1;
+        transform: translateX(10px);
+        color: var(--job-accent);
+        font-weight: 700;
+    }
+    .v-pipeline-step.completed {
+        opacity: 0.7;
+        color: var(--job-accent);
+    }
+    .v-pipeline-dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 10px currentColor;
+    }
+    .v-pipeline-step.active .v-pipeline-dot {
+        animation: pulseStatus 1s infinite alternate;
+    }
+
+    @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+
+    .resume-card { cursor: pointer; transition: all 0.3s ease; position: relative; }
+    .resume-card.selected {
+        border-color: var(--job-accent) !important;
+        background: rgba(var(--job-accent-rgb), 0.08);
+        box-shadow: 0 0 25px rgba(var(--job-accent-rgb), 0.2);
+        transform: translateY(-5px) scale(1.02);
+    }
+    .resume-card.selected::after {
+        content: '\F272';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: 15px; right: 15px;
+        color: var(--job-accent);
+        font-size: 1.2rem;
+    }
+
+    @keyframes scanHorizontal {
+        0%, 100% { top: 0; }
+        50% { top: 100%; }
+    }
+
+    /* AI Scanner Loader */
+    .ai-scanner-loader {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ai-scanner-loader .scanner-bar {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: var(--job-accent);
+        top: 0;
+        animation: scanVertical 2s ease-in-out infinite;
+        box-shadow: 0 0 15px var(--job-accent);
+        z-index: 2;
+    }
+    @keyframes scanVertical {
+        0%, 100% { top: 0; }
+        50% { top: 100%; }
+    }
+    .ai-scanner-loader .outer-ring {
+        position: absolute;
+        inset: -10px;
+        border: 2px solid var(--job-accent);
+        border-radius: 50%;
+        opacity: 0.2;
+        animation: spin 4s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row mb-3 align-items-center">
-    <div class="col-md-8">
-        <h1 class="fw-bold fs-3 mb-1"><i class="bi bi-briefcase-fill text-success me-2"></i>Job Intelligence Engine</h1>
-        <p class="text-muted-custom mb-0">Fast fetching, deterministic matching, and deep market analysis.</p>
+<div class="ats-hero-container">
+    <div class="ats-hero-grid"></div>
+    <div class="row align-items-center position-relative z-2">
+        <div class="col-lg-8 text-center text-lg-start">
+            <div class="pipeline-status-container mb-3">
+                <div class="status-dot-pulse"></div>
+                <span class="text-white small fw-bold text-uppercase tracking-wider">Job Radar Online</span>
+            </div>
+            <h1 class="display-4 fw-bold text-white mb-3" style="font-family: 'Outfit'; letter-spacing: -2px;">Job Intelligence <span class="text-emerald-400" style="color: #34d399;">Engine</span></h1>
+            <p class="lead text-white opacity-75 mb-0" style="max-width: 600px;">Connect to live market data with deterministic matching. We don't just find jobs; we architect your professional fit.</p>
+        </div>
+        <div class="col-lg-4 d-none d-lg-block text-center">
+            <div class="hero-3d-icon" style="animation: float 4s ease-in-out infinite;">
+                <i class="bi bi-radar text-white" style="font-size: 8rem; opacity: 0.15; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));"></i>
+            </div>
+        </div>
     </div>
-    <div class="col-md-4 text-end">
-        <a href="/dashboard/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-house me-1"></i>Back to Hub</a>
-    </div>
+</div>
+
+<div class="d-flex justify-content-end mb-4">
+    <a href="/home/" class="btn-3d-home">
+        <span class="btn-3d-top"><i class="bi bi-house-door-fill me-2"></i>Return Home</span>
+    </a>
 </div>
 
 <div class="row" id="dashboard-content">
     <div class="col-12">
         <!-- UI Workflow Timeline -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between position-relative text-center fw-medium flex-nowrap overflow-x-auto pb-2 custom-scrollbar" style="min-width: 600px;">
-                    <!-- Progress Line Background -->
-                    <div class="position-absolute top-50 start-0 end-0 translate-middle-y bg-secondary bg-opacity-10" style="height: 4px; z-index: 0; left: 5% !important; right: 5% !important; border-radius: 2px;"></div>
-                    <!-- Active Progress Line -->
-                    <div id="workflow-progress-line" class="position-absolute top-50 start-0 translate-middle-y bg-gradient text-white" style="background: linear-gradient(90deg, #198754, #20c997); height: 4px; z-index: 1; left: 5% !important; width: 0%; transition: width 0.5s ease; border-radius: 2px;"></div>
-
-                    <!-- Steps -->
-                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
-                        <div id="step-1-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-white shadow-sm ring-4 ring-green-100" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease; background: linear-gradient(to top right, #198754, #20c997);">
-                            <i class="bi bi-file-person small"></i>
-                        </div>
-                        <h6 class="small fw-bold mb-0 text-success" id="step-1-text" style="font-size: 11px;">Resume</h6>
-                    </div>
-                    
-                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
-                        <div id="step-2-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
-                            <i class="bi bi-search small"></i>
-                        </div>
-                        <h6 class="small fw-bold mb-0 text-secondary" id="step-2-text" style="font-size: 11px;">Jobs</h6>
-                    </div>
-
-                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
-                        <div id="step-3-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
-                            <i class="bi bi-lightning-charge small"></i>
-                        </div>
-                        <h6 class="small fw-bold mb-0 text-secondary" id="step-3-text" style="font-size: 11px;">Match</h6>
-                    </div>
-
-                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
-                        <div id="step-4-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
-                            <i class="bi bi-cpu small"></i>
-                        </div>
-                        <h6 class="small fw-bold mb-0 text-secondary" id="step-4-text" style="font-size: 11px;">Deep ATS</h6>
-                    </div>
-
-                    <div class="position-relative px-2" style="z-index: 2; flex: 1;">
-                        <div id="step-5-circle" class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 text-secondary bg-body-tertiary shadow-sm" style="width: 36px; height: 36px; border: 2px solid white; transition: all 0.3s ease;">
-                            <i class="bi bi-cpu-fill small"></i>
-                        </div>
-                        <h6 class="small fw-bold mb-0 text-secondary" id="step-5-text" style="font-size: 11px;">Skill Analysis</h6>
-                    </div>
-
-
+        <!-- UI Workflow Timeline -->
+        <div class="glass-panel mb-5 overflow-hidden">
+            <div class="pipeline-visualizer">
+                <div class="pipeline-connector"><div id="workflow-fill" class="connector-fill"></div></div>
+                
+                <div class="pipeline-step active" id="step-1">
+                    <div class="step-node"><i class="bi bi-file-earmark-person"></i></div>
+                    <div class="small fw-bold opacity-75">Profile</div>
+                </div>
+                <div class="pipeline-step" id="step-2">
+                    <div class="step-node"><i class="bi bi-search"></i></div>
+                    <div class="small fw-bold opacity-75">Targets</div>
+                </div>
+                <div class="pipeline-step" id="step-3">
+                    <div class="step-node"><i class="bi bi-lightning-charge"></i></div>
+                    <div class="small fw-bold opacity-75">Matches</div>
+                </div>
+                <div class="pipeline-step" id="step-4">
+                    <div class="step-node"><i class="bi bi-cpu"></i></div>
+                    <div class="small fw-bold opacity-75">Deep ATS</div>
+                </div>
+                <div class="pipeline-step" id="step-5">
+                    <div class="step-node"><i class="bi bi-magic"></i></div>
+                    <div class="small fw-bold opacity-75">Optimization</div>
                 </div>
             </div>
         </div>
 
         <!-- Stage 1: Resume Selection -->
-        <div class="card p-4 shadow-sm border-0 mb-4 bg-white" id="stage-1-resume">
-            <h5 class="fw-bold mb-3 pb-2 border-bottom text-success"><i class="bi bi-file-person me-2"></i>Select ATS Profile</h5>
-            <div id="loading-resumes" class="text-center py-4">
-                <span class="spinner-border spinner-border-sm text-success"></span> Loading computed resumes...
+        <div class="glass-panel p-4 mb-4" id="stage-1-resume">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <h5 class="fw-bold mb-0 text-emerald-500" style="color: var(--job-accent);"><i class="bi bi-file-earmark-person-fill me-2"></i>Select Target Profile</h5>
+                <span class="badge bg-emerald-100 text-emerald-700 rounded-pill px-3 py-2 border border-emerald-200" style="background: rgba(16, 185, 129, 0.1); color: var(--job-accent);">Step 01</span>
             </div>
-            <div id="no-resumes-warning" class="alert alert-danger" style="display: none;">
-                <i class="bi bi-shield-x me-2"></i> Access Denied. No ATS-completed resumes found. <a href="/dashboard/ats/" class="fw-bold text-danger text-decoration-underline ms-2">Go to ATS Engine</a>
+            <div id="loading-resumes" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-emerald-500" style="color: var(--job-accent);"></div> 
+                <span class="ms-2 small fw-medium opacity-75">Syncing computed profiles...</span>
+            </div>
+            <div id="no-resumes-warning" class="alert alert-danger glass-panel border-danger border-opacity-25" style="display: none;">
+                <i class="bi bi-shield-x me-2"></i> Access Denied. No ATS-completed resumes found. <a href="/dashboard/ats/" class="fw-bold text-danger text-decoration-underline ms-2">Initialize ATS Engine</a>
             </div>
             <div class="row g-3" id="resumes-list"></div>
             <div class="mt-4 text-end">
-                <button class="btn btn-success fw-bold disabled" id="proceed-btn-1" onclick="goToStage(2)">
-                    Next: Job Preferences <i class="bi bi-arrow-right ms-1"></i>
+                <button class="btn btn-emerald-600 fw-bold disabled rounded-pill px-5 py-2 shadow-lg" id="proceed-btn-1" onclick="goToStage(2)" style="background: var(--job-accent); color: white; border: none;">
+                    Next Step <i class="bi bi-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
 
         <!-- Stage 2: Job Preferences -->
-        <div class="card p-4 shadow-sm border-0 mb-4 bg-white" id="stage-2-prefs" style="display: none;">
-            <h5 class="fw-bold mb-3 pb-2 text-success border-bottom"><i class="bi bi-ui-radios me-2"></i>Job Targets & Preferences</h5>
+        <div class="glass-panel p-4 mb-4" id="stage-2-prefs" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-emerald-500 border-opacity-10">
+                <h5 class="fw-bold mb-0 text-emerald-600" style="color: var(--job-accent);"><i class="bi bi-ui-radios me-2"></i>Job Targets & Filters</h5>
+                <span class="badge bg-emerald-100 text-emerald-700 rounded-pill px-3 py-2 border border-emerald-200" style="background: rgba(16, 185, 129, 0.1); color: var(--job-accent);">Step 02</span>
+            </div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Target Keyword</label>
-                    <input type="text" class="form-control" id="job-target-field" placeholder="e.g. Backend Developer">
+                    <label class="form-label small fw-bold opacity-75">Target Role</label>
+                    <input type="text" class="form-control glass-panel bg-opacity-10 border-opacity-25" id="job-target-field" placeholder="e.g. Backend Developer">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Target City / Country</label>
-                    <input type="text" class="form-control" id="job-location" value="Remote">
+                    <label class="form-label small fw-bold opacity-75">Target Location</label>
+                    <input type="text" class="form-control glass-panel bg-opacity-10 border-opacity-25" id="job-location" value="Remote">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Job Type</label>
-                    <select class="form-select" id="job-type">
+                    <label class="form-label small fw-bold opacity-75">Arrangement</label>
+                    <select class="form-select glass-panel bg-opacity-10 border-opacity-25" id="job-type">
                         <option value="Any">Any</option>
                         <option value="Remote">Remote</option>
                         <option value="Onsite">Onsite</option>
@@ -113,8 +380,8 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Time Filter</label>
-                    <select class="form-select" id="job-time">
+                    <label class="form-label small fw-bold opacity-75">Posting Date</label>
+                    <select class="form-select glass-panel bg-opacity-10 border-opacity-25" id="job-time">
                         <option value="Any time">Any time</option>
                         <option value="Today">Today</option>
                         <option value="3 Days">Past 3 Days</option>
@@ -123,25 +390,33 @@
                 </div>
                 
                 <div class="col-12 mt-4 text-end">
-                    <button class="btn btn-secondary fw-bold px-4 shadow-sm me-2" onclick="goToStage(1)">Back</button>
-                    <button class="btn btn-success fw-bold px-4 text-white shadow-sm" id="search-live-jobs-btn" onclick="fetchAndScoreJobs()">
-                        <i class="bi bi-search me-2"></i>Fetch & Fast Match
+                    <button class="btn btn-outline-secondary rounded-pill fw-bold px-4 me-2" onclick="goToStage(1)">Back</button>
+                    <button class="btn btn-emerald-600 fw-bold px-5 py-2 rounded-pill shadow-lg" id="search-live-jobs-btn" onclick="fetchAndScoreJobs()" style="background: var(--job-accent); color: white; border: none;">
+                        <i class="bi bi-search me-2"></i>Fetch & Analyze
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Stage 3: Fast Match Results -->
-        <div class="card p-4 shadow-sm border-0 mb-4 bg-body-tertiary" id="stage-3-results" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                <h5 class="fw-bold text-success mb-0"><i class="bi bi-lightning-charge me-2"></i>Ranked Job Matches</h5>
-                <span id="low-job-warning" class="badge bg-warning text-dark px-3 py-2 d-none"><i class="bi bi-exclamation-triangle-fill me-1"></i>Low job availability for this role</span>
+        <div class="glass-panel p-4 mb-4" id="stage-3-results" style="display: none; background: rgba(var(--job-accent-rgb), 0.02);">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-emerald-500 border-opacity-10">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold me-3 shadow-sm" onclick="goToStage(2)"><i class="bi bi-arrow-left me-1"></i>Edit Search</button>
+                    <h5 class="fw-bold text-emerald-600 mb-0" style="color: var(--job-accent);"><i class="bi bi-lightning-charge-fill me-2"></i>Ranked Market Intelligence</h5>
+                </div>
+                <span id="low-job-warning" class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 d-none border border-warning border-opacity-25"><i class="bi bi-exclamation-triangle-fill me-1"></i>Low Market Depth</span>
             </div>
             
             <div id="fetching-jobs-loader" class="text-center py-5 d-none">
-                <div class="spinner-grow text-success mb-3" style="width: 3rem; height: 3rem;"></div>
-                <h5 class="fw-bold text-success" id="loading-status-text">🔍 Finding jobs...</h5>
-                <p class="text-muted small">Please wait while we connect to live market data.</p>
+                <div class="ai-scanner-3-ring">
+                    <div class="ring-1"></div>
+                    <div class="ring-2"></div>
+                    <div class="ring-3"></div>
+                    <i class="bi bi-radar fs-2 text-emerald-500 position-absolute top-50 start-50 translate-middle" style="color: var(--job-accent);"></i>
+                </div>
+                <h5 class="fw-bold text-emerald-600 mb-2" style="color: var(--job-accent);">Synchronizing Market Intelligence...</h5>
+                <div id="fetch-pipeline" class="vertical-pipeline-container"></div>
             </div>
             
             <div id="live-jobs-list" class="row g-3 mb-4"></div>
@@ -155,16 +430,21 @@
             <div class="row g-4">
                 <!-- Deep ATS Stage -->
                 <div class="col-12" id="stage-4-container" style="display: none;">
-                    <div class="card p-4 shadow-sm border-0 bg-white">
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <h5 class="fw-bold text-primary mb-0"><i class="bi bi-cpu-fill me-2"></i>Deep ATS Analysis</h5>
-                            <button class="btn btn-primary btn-sm fw-bold px-4 shadow-sm" id="btn-next-skills" onclick="goToStage(5)" style="display: none;">Next: Skill Analysis <i class="bi bi-arrow-right ms-1"></i></button>
+                    <div class="glass-panel p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-primary border-opacity-10">
+                            <h5 class="fw-bold text-primary mb-0"><i class="bi bi-cpu-fill me-2"></i>Advanced AI Content Analysis</h5>
+
                         </div>
                         
                         <div id="deep-ats-loader" class="text-center py-5 d-none">
-                            <span class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></span>
-                            <h5 class="fw-bold text-primary">AI scoring in progress...</h5>
-                            <p class="small text-muted">Running full deterministic analysis against your resume.</p>
+                            <div class="ai-scanner-3-ring" style="width: 80px; height: 80px;">
+                                <div class="ring-1"></div>
+                                <div class="ring-2"></div>
+                                <div class="ring-3"></div>
+                                <i class="bi bi-cpu fs-3 text-primary position-absolute top-50 start-50 translate-middle"></i>
+                            </div>
+                            <h5 class="fw-bold text-primary mb-2">Advanced Content Intelligence</h5>
+                            <div id="deep-ats-pipeline" class="vertical-pipeline-container" style="border-color: rgba(13, 110, 253, 0.1); background: rgba(13, 110, 253, 0.02);"></div>
                         </div>
                         
                         <div id="deep-ats-results" class="d-none">
@@ -173,16 +453,53 @@
                     </div>
                 </div>
 
-                <!-- Skill Analysis Stage -->
+                <!-- Optimization Stage (New Workflow) -->
                 <div class="col-12" id="stage-5-container" style="display: none;">
-                    <div class="card p-4 shadow-sm border-0 bg-white">
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <h5 class="fw-bold text-info mb-0"><i class="bi bi-cpu-fill me-2"></i>Skill Analysis Insights</h5>
-                            <button class="btn btn-secondary btn-sm fw-bold px-4 shadow-sm" onclick="goToStage(4)"><i class="bi bi-arrow-left me-1"></i>Back to ATS Score</button>
+                    <div class="glass-panel p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-info border-opacity-10">
+                            <h5 class="fw-bold text-info mb-0"><i class="bi bi-magic me-2"></i>AI Resume Optimization</h5>
+                            <button class="btn btn-outline-secondary btn-sm rounded-pill fw-bold px-4 shadow-sm" onclick="goToStage(4)"><i class="bi bi-arrow-left me-1"></i>Back to ATS</button>
                         </div>
                         
-                        <div id="skill-analysis-results">
-                            <!-- Skill Data Move here -->
+                        <div id="skill-analysis-results" style="display: none;"></div>
+                        
+                        <div id="optimizer-loading" class="mt-4 p-5 text-center rounded bg-primary bg-opacity-10 shadow-sm glass-panel" style="display: none;">
+                            <div class="ai-scanner-loader text-primary mb-3 mx-auto" style="width: 60px; height: 60px;">
+                                <div class="scanner-bar"></div>
+                                <div class="outer-ring"></div>
+                                <div class="inner-dot"></div>
+                            </div>
+                            <h5 class="fw-bold text-primary mb-2">Architecting Optimized CV</h5>
+                            <div id="optimizer-pipeline" class="vertical-pipeline-container mx-auto" style="border-color: rgba(13, 110, 253, 0.1); background: rgba(13, 110, 253, 0.02); max-width: 300px;"></div>
+                        </div>
+
+                        <div id="optimizer-results" class="mt-4 p-4 border border-primary border-opacity-50 rounded bg-white shadow-sm" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-primary border-opacity-25">
+                                <h5 class="fw-bold text-primary mb-0"><i class="bi bi-file-earmark-check-fill me-2"></i>Optimized Resume Copy</h5>
+                                <span class="badge bg-success px-3 py-2 fs-6 shadow-sm" id="optimized-score-display">ATS Score: 0</span>
+                            </div>
+                            <div class="row g-4">
+                                <div class="col-md-7">
+                                    <div class="position-relative">
+                                        <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2" onclick="copyOptimizedCV()"><i class="bi bi-clipboard"></i> Copy</button>
+                                        <div id="cv-output-text" class="p-4 bg-light border rounded small" style="white-space: pre-wrap; font-family: monospace; max-height: 500px; overflow-y: auto;"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <div class="card shadow-sm border-0 mb-3 bg-success bg-opacity-10">
+                                        <div class="card-header bg-transparent border-0 fw-bold text-success pb-0"><i class="bi bi-check-circle-fill me-2"></i>Key Improvements</div>
+                                        <div class="card-body py-2">
+                                            <ul id="improvements-list" class="list-group list-group-flush border-0"></ul>
+                                        </div>
+                                    </div>
+                                    <div class="card shadow-sm border-0 bg-info bg-opacity-10">
+                                        <div class="card-header bg-transparent border-0 fw-bold text-info pb-0"><i class="bi bi-person-fill-gear me-2"></i>Manual Actions Required</div>
+                                        <div class="card-body py-2">
+                                            <ul id="suggestions-list" class="list-group list-group-flush border-0"></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -206,22 +523,49 @@
 </style>
     <!-- Manual ATS Modal -->
     <div class="modal fade" id="manualATSModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Analyze Job for ATS</h5>
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-panel border-0 shadow-2xl overflow-hidden">
+                <div class="modal-header border-0 bg-emerald-600 bg-opacity-10 p-4">
+                    <h5 class="modal-title fw-bold text-emerald-700" style="color: var(--job-accent);"><i class="bi bi-pencil-square me-2"></i>Content Synchronization</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="text-muted small mb-3">Please paste the full job description from the original job posting below for a more accurate ATS analysis.</p>
+                <div class="modal-body p-4">
+                    <div class="alert bg-primary bg-opacity-10 text-primary border-0 small mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i> Paste the <strong>Full Job Description</strong> below to activate high-precision AI content matching.
+                    </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Job Description</label>
-                        <textarea class="form-control" id="manual-jd-text" rows="10" placeholder="Paste the job description here..."></textarea>
+                        <textarea class="form-control glass-panel bg-opacity-5 p-4" id="manual-jd-text" rows="12" placeholder="Paste entire job description here for strategic evaluation..." style="font-size: 0.9rem; border: 1px dashed var(--job-accent) !important;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-purple fw-bold" id="manual-ats-btn" onclick="submitManualATS()">Analyze ATS Score</button>
+                <div class="modal-footer border-0 p-4">
+                    <button type="button" class="btn btn-link text-decoration-none text-muted fw-bold" data-bs-dismiss="modal">Discard</button>
+                    <button type="button" class="btn btn-emerald-600 rounded-pill px-5 fw-bold" id="manual-ats-btn" onclick="submitManualATS()" style="background: var(--job-accent); color: white; border: none;">Activate Deep Analysis</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pre-Optimization Modal -->
+    <div class="modal fade" id="optimizationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-panel border-0 shadow-2xl overflow-hidden">
+                <div class="modal-header border-0 bg-primary bg-opacity-10 p-4">
+                    <h5 class="modal-title fw-bold text-primary"><i class="bi bi-magic me-2"></i>Configure AI Deep Optimization</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert bg-success bg-opacity-10 text-success border-0 small mb-4">
+                        <i class="bi bi-check-circle-fill me-2"></i> Your ATS score is 70% or higher. You are eligible for Deep Resume Optimization.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small"><i class="bi bi-pencil-fill text-primary me-2"></i>Custom Optimization Instructions (Optional)</label>
+                        <textarea class="form-control glass-panel bg-light p-3" id="optimization-instructions" rows="4" placeholder="E.g., 'Emphasize my leadership experience' or 'Focus strictly on Python and SQL skills...'"></textarea>
+                        <small class="text-muted mt-2 d-block">You can edit these instructions to guide the AI before it restructures your resume to achieve a 90%+ ATS score.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 bg-light bg-opacity-50">
+                    <button type="button" class="btn btn-link text-decoration-none text-muted fw-bold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" onclick="startOptimizing()">Execute Deep Optimization <i class="bi bi-cpu-fill ms-1"></i></button>
                 </div>
             </div>
         </div>

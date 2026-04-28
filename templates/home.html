@@ -107,11 +107,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="loader" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
-</div>
-
-<div id="content" style="display: none;">
+<div id="content">
     <!-- Hero -->
     <div class="home-hero" data-aos="zoom-in">
         <div class="row align-items-center">
@@ -121,7 +117,7 @@
                     <span class="text-success small fw-bold text-uppercase" style="letter-spacing: 1px;">AI System Online</span>
                 </div>
                 <h1 class="display-3 fw-bold mb-3" style="font-family: 'Outfit';">Hello, <span id="user-name">Professional</span></h1>
-                <p class="lead text-white-50 mb-0">Your AI-powered career navigation dashboard is ready.</p>
+                <p class="lead text-white-50 mb-0">You bring the ambition. We’ll handle the strategy.</p>
             </div>
             <div class="col-lg-4 d-none d-lg-flex justify-content-center">
                 <div class="hero-visual">
@@ -266,8 +262,8 @@
                     }
                 }
             }
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
+            // document.getElementById('loader').style.display = 'none';
+            // document.getElementById('content').style.display = 'block';
         } catch (e) { console.error(e); }
     });
 

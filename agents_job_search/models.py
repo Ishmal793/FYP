@@ -13,6 +13,7 @@ class JobResult(models.Model):
     match_score = models.IntegerField(default=0)
     missing_skills = models.JSONField(default=list)
     required_skills = models.JSONField(default=list)
+    is_saved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
